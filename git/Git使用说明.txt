@@ -1,0 +1,166 @@
+﻿参考：https://segmentfault.com/a/1190000004606816#articleHeader0
+
+创建--初始化仓库：
+
+  1、建立一个目录，并初始化仓库。命令：git init
+  2、查看仓库状态。命令：git status
+
+提交--版本更新：
+
+  编辑代码后，一个完整的提交流程应该是：git status -> git add -> git commit 。
+
+  1、更改仓库状态。命令：git status
+  2、加入暂存区：暂存区是提交之前的一个临时区域。命令：git add
+     git add将其加入暂存区，为保存到工作树中做准备
+  3、保存仓库的历史记录：将刚刚的提交状态保存，这样就完成了一个版本控制
+     命令：git commit -m ""
+     说明：-m 参数后的字符串称作提交信息，是对这个提交的描述。
+
+查看--仓库状态:
+  1、命令：git log 查看提交日志：查看以往仓库中提交的日志，什么人在什么时候进行了提交或合并，
+     以及操作前后有怎样的差别
+  2、命令：git diff 查看更改前后的差别：查看工作树、暂存区、最新提交之间的差别
+     1)查看工作树和暂存区的区别：在test.html中写点东西，先不用git add,直接运行git diff查看，
+       此时显示的是工作树与最新提交状态之间的差别。
+     2)查看工作树与最新提交的差别：先执行git add将修改提交到暂存区；如果此时执行git diff,
+       会发现没有任何显示，这是因为执行了git add后工作树和暂存区的状态并无差别。
+       要查看与最新提交的差别，要执行git diff HEAD。
+
+远程仓库--GitHub
+  准备
+    1、创建GitHub账号
+    2、设置SSH Key,Github上仓库与本地仓库连接，是通过使用了SSH的公开秘钥认证方式进行的。
+       所以，得现在本地生成SSH Key，然后设置到Github上，才能实现仓库的远程连接。
+       打开Git Bash，创建SSH Key。运行命令：ssh-keygen -t rsa -C "your_email@example.com"
+    3、输入密码后，会出现以下结果，表明创建成功。id_rsa是私有密钥，id_rsa.pub是公开密钥。
+    4、在Github中添加公开密钥。
+
+  创建--建立远程仓库
+    1、Create a new repository
+    2、填写repository名称，配置
+       1)如果想向Github添加手中已有的Git仓库，建议不要勾选Initialize this repository with a README选项；
+       2)Add.gitignore：可以在初始化时生成.gitignore文件，这个设定会帮我们把不需要在Git仓库中
+         进行版本管理的文件记录在.gitignore文件中，省去了每次根据框架进行设置的麻烦。若不使用任何框架，则可不选择。
+       3)Add a license：选择要添加的许可协议文件，一般可不选
+    3、点击创建，创建远程仓库成功
+
+  克隆--获取远程仓库
+    当你是先在Github上创建好项目仓库时，此时需要把远程仓库克隆到本地，创建一个本地仓库。
+    1、复制HTTPS链接
+    2、打开Git Bash，进入要作为仓库的文件目录
+    3、运行命令：git clone https://github.com/zhangliguo1986/test.git
+    4、克隆成功
+    5、进入仓库，查看当前仓库分支信息，命令：git branch -a
+    说明：执行git clone命令后，我们会默认处于master分支下，
+          同时系统会自动将origin设置成该远程仓库的标识符（即origin代表了该远程仓库）
+  
+  同步--更新代码（从本地仓库上传到远程仓库）
+    当在本地完成好编程作业时，此时需要将代码同步到远程仓库，以实现托管。
+    1、添加远程仓库：你需要将远程仓库与本地仓库连接起来，我们用git remote add命令来设置本地仓库的远程仓库。 
+       命令：git remote add origin https://github.com/zhangliguo1986/test.git
+    2、添加文件到版本控制并提交或修改文件提交
+       git add *
+       git commit -m "提交说明"
+    3、推送至远程仓库：如果想将当前本地仓库分支下的内容推送给远程仓库，要用git push命令。
+       假定我们在master分支（如果是其他分支，最后的参数就改为其它分支对应名称）下操作。
+       命令：git push -u origin master
+
+  同步--更新代码（从远程仓库拉取到本地仓库）
+    当你的队友将完成了编程作业，将其代码推送到远程仓库后，此时，你可能需要将代远程仓库队友更新后的代码拉到本地，这时要用到git pull命令。
+    1、运行命令行 git pull
+    2、拉取成功
+
+GitHub的几大功能
+
+  Issue:
+  在软件开发过程中，开发者们为了跟踪BUG及进行软件相关讨论，进而方便管理，创建了Issue。
+
+  在Github上，可以将它作为开发者之间的交流工具，多多加以利用。
+
+  Issue可以在以下情况使用：
+
+      发现软件的Bug并报告；
+
+      有事想向作者询问、探讨；
+
+      事先列出今后准备实施的任务。
+
+  Issue支持markdown语法，也支持添加标签便于管理。
+
+  Pull Request
+  Pull Request是用户修改代码后向对方仓库发送采纳请求的功能，也是Github的核心功能。
+
+  Pull Request的流程：
+
+      1、Fork：将你要修改代码的项目仓库Fork到自己的Github账号上，创建一个属于你的仓库；
+      2、Clone：将其clone到本地；
+      3、Branch：在本地仓库创建一个特性分支（有了更明确的主题，也便于对方了解自己修改代码的意图），
+         用于本次代码修改。
+         命令：
+         git branch -a
+         git checkout -b feature-test
+         git status
+      4、提交修改git commit 
+         git status
+         git commit -am "A test for pull request"
+      5、Push：要从Github发送Pull Ruquest，Github端的仓库必须有一个包含了修改后代码的分支。
+         所以，要创建本地特性分支的相应远程分支。 
+         命令：git push origin feature-test
+      6、发送Pull Request 
+
+  在Issue里可以添加图片，可以使用表情。
+
+  Pull Request：
+
+  Pull Request是用户修改代码后向对方仓库发送采纳请求的功能，也是Github的核心功能。
+
+  Pull Request的流程：
+
+    1、Fork：将你要修改代码的项目仓库Fork到自己的Github账号上，创建一个属于你的仓库；
+    2、将其clone到本地 
+    3、Branch：在本地仓库创建一个特性分支（有了更明确的主题，也便于对方了解自己修改代码的意图），用于本次代码修改
+       命令：
+       git branch -a
+       git checkout -b feature-test
+       git status
+    4、提交修改
+       命令：
+       git commit -am "A test for pull request"
+    5、Push，要从Github发送Pull Ruquest，Github端的仓库必须有一个包含了修改后代码的分支。
+       所以，要创建本地特性分支的相应远程分支
+       git push origin feature-test
+       git branch -a
+    6、发送Pull Request
+    
+  这样，就是一个完整的发送Pull Request流程。
+
+常用的Git命令：
+  
+  基本操作：
+  git config --list :查看配置列表
+  git init :初始化仓库
+  git status :查看仓库状态
+  git add :向暂存区中添加文件
+  git commit :保存仓库的历史记录，git commit -m "提交说明"
+  git log :查看提交日志
+  git diff :查看更改前后的差别，git diff origin/分支名(branch),
+            查看完后按Q退出。
+  git branch :查看分支一览表，git branch 默认查看本地分支，
+              git branch -a 查看本地和远程库分支
+  git branch 分支名称 :创建本地分支
+  git push origin 分支名称 :把本地分支推送到远程创建分支
+  git branch -D 分支名称 :删除本地分支
+  
+  git checkout -b 分支名称 :创建并切换到分支
+  git checkout 分支名称 :切换到分支
+  git merge 分支发送者/分支名称 :合并分支
+  git reset :回溯历史版本
+  git remote add 远程地址 :添加远程仓库
+  git push :推送至远程仓库，git push origin master 推送到远程分支
+  git clone 远程地址 :获取克隆远程仓库
+
+  删除远程分支：
+  git push -r -D origin/分支别名
+  git push origin :分支名称
+  产看origin别名：
+  git remote -v
