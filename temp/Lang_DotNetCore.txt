@@ -1,0 +1,2229 @@
+﻿错误提示：
+Failed to load /root/dotnet/bin/libcoreclr.so, error: libunwind.so.8: cannot open shared object file: No such file or directory
+yum install libunwind
+https://docs.microsoft.com/zh-cn/dotnet/api/?term=loc
+http://www.hanselman.com/blog/CategoryView.aspx?category=DotNetCore
+
+
+※·•◆★●̑∵∴®¤≈……┌┐└┘∟「」⊥┼┤┴├┬↑↓→←↖↗↘↙♀♂≠╳√╱╲—│∞π
+┌ ┐
+│ │
+└-┘
+
+流程
+
+
+
+
+
+
+一、官方文档
+英文：
+https://docs.microsoft.com/en-us/aspnet/core/
+https://docs.microsoft.com/en-us/dotnet/core/
+中文：
+https://docs.microsoft.com/zh-cn/aspnet/core/
+https://docs.microsoft.com/zh-cn/dotnet/core/
+
+
+二、启动
+1.托管方式
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        IWebHostBuilder builder = new WebHostBuilder()                                                             // 
+            // 或使用自带默认方式
+            // WebHost.CreateDefaultBuilder()
+            // 它封装了UseKestrel()、UseContentRoot()等一系列默认方法，按顺序流程如下：
+            // 1.UseKestrel：使用Kestrel作为Web server。
+            // 2.UseContentRoot：指定Web host使用的content root（内容根目录），比如Views。默认为当前应用程序根目录。
+            // 3.ConfigureAppConfiguration：设置当前应用程序配置。主要是读取 appsettinggs.json 配置文件、开发环境中配置的UserSecrets、添加环境变量和命令行参数 。
+            // 4.ConfigureLogging：读取配置文件中的Logging节点，配置日志系统。
+            // 5.UseIISIntegration：使用IISIntegration 中间件。
+            // 6.UseDefaultServiceProvider：设置默认的依赖注入容器。
+            
+            // 监听地址，也可用命令行代替，dotnet run --urls "http://*:5000"
+            .UseUrls("http://*:5000;http://localhost:5001;https://hostname:5002")
+            // 使用KestrelServer进行部署                                                            // using Microsoft.AspNetCore.Hosting
+            .UseKestrel(options =>                                                                  // 简单方式：.UseKestrel()
+            {
+                options.Limits.MaxConcurrentConnections = 100;
+                options.Limits.MaxConcurrentUpgradedConnections = 100;
+                // The default maximum request body size is 30,000,000 bytes, which is approximately 28.6MB.
+                options.Limits.MaxRequestBodySize = 10 * 1024;                                      // 在controller中可用[RequestSizeLimit(100000000)] public IActionResult MyActionMethod()
+                //  If the rate drops below the minimum, the connection is timed out.
+                options.Limits.MinRequestBodyDataRate = new MinDataRate(bytesPerSecond: 100, gracePeriod: TimeSpan.FromSeconds(10));
+                options.Limits.MinResponseDataRate = new MinDataRate(bytesPerSecond: 100, gracePeriod: TimeSpan.FromSeconds(10));
+                
+                options.Listen(IPAddress.Loopback, 5000);
+                options.Listen(IPAddress.Loopback, 5001, listenOptions =>
+                {
+                    listenOptions.UseHttps("myCert.pfx", "myPassword");
+                });
+            })
+            // 使用HttpSys进行部署
+            .UseHttpSys()
+            
+            // 内容根 ( content root ) 决定它将在哪里搜索内容文件，比如 MVC 视图文件
+            .UseContentRoot(Directory.GetCurrentDirectory())
+            
+            // 使用IIS 和 IIS Express 进行部署
+            .UseIISIntegration()
+            
+            // 设置配置文件
+            .UseStartup<Startup>()
+            //或.Configure(app => { app.Run(async (context) => await context.Response.WriteAsync("Hi!")); })
+            
+            // 显示详细错误页面
+            .UseSetting("detailedErrors", "true")
+            /*
+                Properties\launchSettings.json文件：ASPNETCORE_ENVIRONMENT有三种值：分别是Development，Staging 和 Production，大小写不敏感。
+                IHostingEnvironment
+                public static bool IsEnvironment(this IHostingEnvironment hostingEnvironment, string environmentName);
+                public static bool IsDevelopment(this IHostingEnvironment hostingEnvironment);
+                public static bool IsProduction(this IHostingEnvironment hostingEnvironment);
+                public static bool IsStaging(this IHostingEnvironment hostingEnvironment);
+            */
+            
+            // 设置运行环境
+            .UseEnvironment("Development")
+            
+            // 防止托管启动程序集
+            .UseSetting(WebHostDefaults.PreventHostingStartupKey, "true")
+            
+            // 配置日志
+            // 之后在Controller中注入，如：public HomeController(ILogger<HomeController> logger)
+            .ConfigureLogging((hostingContext, logging) =>
+            {
+                logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                logging.AddConsole();
+                logging.AddDebug();
+            });
+            
+        IWebHost webHost = builder.Build();
+
+        // 阻塞方式
+        webHost.Run();
+        // 非阻塞方式
+        webHost.Start();
+        
+        // 或直接简单模式
+        using (var webHost = WebHost.Start("http://localhost:8080", app => app.Response.WriteAsync("Hello, World!")))
+        {
+            Console.WriteLine("Use Ctrl-C to shutdown the host...");
+            webHost.WaitForShutdown();
+        }
+    }
+}
+
+★CreateDefaultBuilder()源码说明
+public static IWebHostBuilder CreateDefaultBuilder(string[] args)
+{
+    var builder = new WebHostBuilder()
+        .UseKestrel()
+        .UseContentRoot(Directory.GetCurrentDirectory())
+        .ConfigureAppConfiguration((hostingContext, config) =>
+        {
+            var env = hostingContext.HostingEnvironment;
+    
+            config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                  .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+            if (env.IsDevelopment())
+            {
+                var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
+                if (appAssembly != null)
+                {
+                    config.AddUserSecrets(appAssembly, optional: true);
+                }
+            }
+    
+            config.AddEnvironmentVariables();
+            if (args != null)
+            {
+                config.AddCommandLine(args);
+            }
+        })
+        .ConfigureLogging((hostingContext, logging) =>
+        {
+            logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+            logging.AddConsole();
+            logging.AddDebug();
+        })
+        .UseIISIntegration()
+        .UseDefaultServiceProvider((context, options) =>
+        {
+            options.ValidateScopes = context.HostingEnvironment.IsDevelopment();
+        });
+    return builder;
+}
+
+2.Startup文件
+·ConfigureServices方法是用来把services(各种服务，例如identity, ef, mvc等等包括第三方的，或者自己写的)加入(register)到container(asp.net core的容器)中去，并配置这些services。这个container是用来进行dependency injection的(依赖注入)。所有注入的services(此外还包括一些框架已经注册好的services) 在以后写代码的时候，都可以将它们注入(inject)进去. 例如上面的Configure方法的参数，app, env, loggerFactory都是注入进去的services。
+·Configure方法是asp.net core程序用来具体指定如何处理每个http请求的，例如我们可以让这个程序知道我使用mvc来处理http请求，那就调用app.UseMvc()这个方法就行。但是目前，所有的http请求都会导致返回"Hello World!"。
+这几个方法的调用顺序: Main -> ConfigureServices -> Configure
+
+
+// DotNetCore 的 Startup
+namespace DotNetCore
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            WebHost.CreateDefaultBuilder(args)
+                .UseStartup<Startup>()
+                .Build();
+                .Run();
+        }
+    }
+
+
+    // Core Startup
+    public class Startup
+    {
+        /// <summary>
+        /// Startup文件中执行方法的步骤使用A，B，C表示
+        /// </summary>
+        /// <param name="env"></param>
+        /// 步骤A   IHostingEnvironment获取环境变量信息，没错就是获取环境变量
+        public Startup(IHostingEnvironment env)
+        {
+            //这里创建ConfigurationBuilder，其作用就是加载Congfig等配置文件
+            var builder = new ConfigurationBuilder()
+                //env.ContentRootPath：获取当前项目的根路径
+                //env.WebRootPath：获取wwwroot所在目录
+                .SetBasePath(env.ContentRootPath)
+                //使用AddJsonFile方法把项目中的appsettings.json配置文件加载进来，后面的reloadOnChange顾名思义就是文件如果改动就重新加载
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                //这里关注的是$"{param}"的这种写法，有点类似于string.Format()
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
+    
+            if (env.IsDevelopment())
+            {
+                //待研究
+                builder.AddUserSecrets();
+    
+                //待研究
+                builder.AddApplicationInsightsSettings(developerMode: true);
+            }
+    
+            builder.AddEnvironmentVariables();
+            //这返回一个配置文件跟节点：IConfigurationRoot
+            Configuration = builder.Build();
+        }
+    
+        /// <summary>
+        /// 通过构造器获取配置文件等信息（个人眉脚：这里是不是可以把这个节点开放到整个项目都是用，因为有些配置信息需要在实际的代码类中使用到，这样就不用再单独再获取一次了吧）
+        /// </summary>
+        public IConfigurationRoot Configuration { get; }
+    
+        /// <summary>
+        /// 步骤B  各种服务依赖注册的地方，netcore还是配置依赖注入方式为主。会在Configure方法之前被调用
+        /// </summary>
+        /// <param name="services"></param>
+        public void ConfigureServices(IServiceCollection services)
+        {
+            // 待验证功能
+            services.AddApplicationInsightsTelemetry(Configuration);
+    
+            // 这里是注入了数据库上下文，如果没有这里，刚才的Controller获取出来根本就获取不到数据信息
+            // Configuration.GetConnectionString("DefaultConnection")获取了配置文件appsettings.json中的DefaultConnection节点数据
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+            // 注入Indentity，目前这个IdentityRole在这里暂时没用到
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                    .AddEntityFrameworkStores<ApplicationDbContext>()
+                    .AddDefaultTokenProviders();
+
+            // 添加mvc服务，没有这个mvc运行不起来
+            services.AddMvc();
+            // 定制序列化器
+            services.AddMvc().AddXmlSerializerFormatters();
+            services.AddMvc(options =>
+            {
+                options.Filters.Add(typeof(XXXXXMiddlewareAttribute));
+                options.RespectBrowserAcceptHeader = true;
+            });
+
+            // 默认情况下，即使http请求设置了Accept: application/xml，返回内容仍为json格式，因为asp.net core 默认只实现了json
+            services.AddMvcCore(options =>
+                {
+                    // 仅定制输出序列化器
+                    JsonSerializerSettings settings = new JsonSerializerSettings()
+                    {
+                        DateFormatString = "yyyy-MM-dd HH:mm:ss";
+                    };
+                    options.OutputFormatters.Add(new JsonOutputFormatter(settings, null));
+                    options.OutputFormatters.Add(new XmlSerializerOutputFormatter());
+                    options.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+                });
+
+            // 启用版本控制
+            services.AddApiVersioning();        // Microsoft.AspNetCore.Mvc.Versioning ，后续有专题介绍
+
+            // 启用跨域请求功能
+            services.AddCors();
+
+            // 跨域选项设置
+            // 提示 Refused to display 'http://www.***.com/login/doLogin.html' in a frame because it set 'X-Frame-Options' to 'SAMEORIGIN'. 
+            services.AddAntiforgery(option => option.SuppressXFrameOptionsHeader = true);                       // 禁用X-Frame-Options
+            /*
+                X-Frame-Options HTTP 响应头是用来给浏览器指示允许一个页面可否在 <frame>, <iframe> 或者 <object> 中展现的标记。网站可以此，来确保自己网站的内容没有被嵌到别人的网站中去，
+                也从而避免了点击劫持 (clickjacking) 的攻击。使用HTTP 响应头信息中的设置 X-Frame-Options属性，使用 X-Frame-Options的属性参数：
+                    DENY：表示该页面不允许在 frame 中展示，即便是在相同域名的页面中嵌套也不允许。
+                    SAMEORIGIN：表示该页面可以在相同域名页面的 frame 中展示。
+                    ALLOW-FROM：表示该页面可以在指定来源的 frame 中展示。
+            */
+
+            // 设置内容协商格式，asp.net core 2.0 默认返回的结果格式是Json, 并使用json.net对结果默认做了camel case的转，也可通过以下方式去掉此默认行为
+            services.AddJsonOptions(options =>
+                {
+                    if (options.SerializerSettings.ContractResolver is DefaultContractResolver resolver)
+                    {
+                        resolver.NamingStrategy = null;
+                    }
+                });
+
+            // 依赖注入
+            //services.AddTransient<>();        // Transient 服务在每次请求时被创建，它最好被用于轻量级无状态服务（如我们的Repository和ApplicationService服务）
+            //services.AddSingleton<>();        //  服务在第一次请求时被创建（或者当我们在ConfigureServices中指定创建某一实例并运行方法），其后的每次请求将沿用已创建服务。如果开发者的应用需要单例服务情景，请设计成允许服务容器来对服务生命周期进行操作，而不是手动实现单例设计模式然后由开发者在自定义类中进行操作。
+            //services.AddScoped<>();           // Scoped 服务在每次请求时被创建，生命周期横贯整次请求
+            //services.AddMemoryCache();        // MemoryCache缓存注入
+
+            services.AddRouting(options => options.LowercaseUrls = true);               // 小写路由
+
+            // 注入netcore自带的两个服务
+            services.AddTransient<IEmailSender, AuthMessageSender>();
+            services.AddTransient<ISmsSender, AuthMessageSender>();
+            // 之后，在XXXController中通过构造方法public XXXController(ISmsSender sender)可进行注入
+            // 或通过以下方式获取
+            //public void Configure(IApplicationBuilder app)
+            //{
+            //    app.ApplicationServices.GetService<TTT>()
+            //}
+
+           /*
+            * appsettings.json
+            * {
+            *   "Logging": {
+            *     "IncludeScopes": false,
+            *     "Debug": {
+            *       "LogLevel": {
+            *         "Default": "Warning"
+            *       }
+            *     },
+            *     "Console": {
+            *       "LogLevel": {
+            *         "Default": "Warning"
+            *       }
+            *     }
+            *   }
+            * }
+            */
+            // Microsoft.Extensions.Logging 、Microsoft.Extensions.Logging.Configuration 、Microsoft.Extensions.Logging.Console
+            services.AddLogging(builder => builder    
+                .AddConfiguration(conf.GetSection("Logging"))
+                .AddConsole());
+
+        }
+    
+        /// <summary>
+        /// 步骤C
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="env"></param>
+        /// <param name="loggerFactory"></param>
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        {
+            // 添加Console输出
+            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+            loggerFactory.AddDebug();
+            
+            
+            // 待研究
+            app.UseApplicationInsightsRequestTelemetry();
+            
+            
+            // 待研究
+            app.UseApplicationInsightsExceptionTelemetry();
+            
+            
+            // 设置mvc路由
+            app.UseMvc(routes =>
+            {
+                // 这里的{id?} ?号表示可选参数
+                routes.MapRoute(
+                    name: "default",
+                    template: "{controller=Home}/{action=Index}/{id?}");
+                // 等同于
+                routes.MapRoute(
+                name: "default",
+                template: "{controller}/{action}/{id?}",
+                defaults: new { controller = "Home", action = "Index" }); 
+            });
+            
+            
+            // 设置异常错误页面
+            if (env.IsDevelopment())
+            {
+                // 跳转到异常页面，异常错误展示
+                app.UseDeveloperExceptionPage();                        //当发生异常，抛出详细异常错误界面
+                app.UseDatabaseErrorPage();
+                app.UseBrowserLink();
+            }
+            else
+            {
+                // 如果错误，从定向到错误改路由
+                app.UseExceptionHandler("/Home/Error");
+            }
+            
+            
+            // 自定义状态页样式
+            app.UseStatusCodePages(async context =>
+            {
+                context.HttpContext.Response.ContentType = "text/plain";
+                await context.HttpContext.Response.WriteAsync(
+                    "Status code page, status code: " + 
+                    context.HttpContext.Response.StatusCode);
+            });
+            // 或
+            app.UseStatusCodePages("text/plain", "Status code page, status code: {0}");
+            // 以Redirect且code=200的方式返回error页
+            app.UseStatusCodePagesWithRedirects("/error");
+            // 以Redirect且指定code的方式返回error页
+            app.UseStatusCodePagesWithReExecute("/error", "?StatusCode={0}");
+            
+            
+            // 默认首页服务，UseDefaultFiles 必须在 UseStaticFiles 之前调用
+            DefaultFilesOptions options = new DefaultFilesOptions(); 
+            options.DefaultFileNames.Clear(); 
+            options.DefaultFileNames.Add("index.aspx");
+            options.DefaultFileNames.Add("default.aspx");
+            app.UseDefaultFiles(options);
+            
+            
+            // 允许直接浏览目录（不能查看文件）
+            app.UseDirectoryBrowser(new DirectoryBrowserOptions()
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\images")),
+                RequestPath = new PathString("/MyImages")
+            });
+            
+            
+            // 允许访问文件（不能查看目录）
+            // 启动静态文件，可访问目录（默认为根目录wwwroot）下的文件，using Microsoft.AspNetCore.StaticFiles
+            app.UseStaticFiles();
+            
+            // 设置不限制Content-Type，否则不支持例如apk、deb等未知格式
+            app.UseStaticFiles(new StaticFileOptions()
+            {
+                ServeUnknownFileTypes = true 
+            });
+            
+            // 设置仅允许访问指定目录，在请求 http://<app>/images/test.png 时，就能访问到 test.png 文件
+            /* (小知识:max-age：表示当访问此网页后的max-age秒内再次访问不会去服务器请求，其功能与Expires类似，
+             * 只是Expires是根据某个特定日期值做比较。一但缓存者自身的时间不准确，则结果可能就是错误的，
+             * 而max-age，显然无此问题。Max-age的优先级也是高于Expires的。)
+             * /
+            app.UseStaticFiles(new StaticFileOptions()
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\images")),
+                RequestPath = new PathString("/MyImages"),
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=600");                                 // 设置http响应缓存为600秒
+                }
+            });
+            
+            
+            // 设置仅允许访问指定Mime
+            // 方式一
+            FileExtensionContentTypeProvider provider = new FileExtensionContentTypeProvider();
+            provider.Mappings[".myapp"] = "application/x-msdownload";
+            provider.Mappings[".htm3"] = "text/html";
+            provider.Mappings[".image"] = "image/png";
+            provider.Mappings.Remove(".mp4");
+            // 方式二
+            FileExtensionContentTypeProvider provider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
+            {
+                {".apk", "application/vnd.android.package-archive"},
+                {".nupkg", "application/zip"}
+            });
+            // 方式三
+            FileExtensionContentTypeProvider provider = new FileExtensionContentTypeProvider();
+            provider.Mappings.Remove(".png");
+            
+            
+            // 静态文件
+            app.UseStaticFiles(new StaticFileOptions()
+            {
+                ContentTypeProvider = provider
+            });
+            
+            
+            // UseFileServer 包含了 UseStaticFiles, UseDefaultFiles 和 UseDirectoryBrowser 的功能。
+            app.UseFileServer(new FileServerOptions()
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "angularjs")),
+                RequestPath = "/ng1",
+                EnableDirectoryBrowsing = true                          // 允许查看目录
+            });
+            
+            
+            // Add cookie-based authentication to the request pipeline.
+            app.UseIdentity();
+            
+            
+            app.UseMvcWithDefaultRoute();                               // Add MVC to the request pipeline.
+            
+            
+            // 自定义欢迎页
+            app.UseWelcomePage("/");                                    //引用Microsoft.Owin.Diagnostics，当请求的路径（Request.Path）为根目录时，渲染输出Webcome Page并且不继续执行Pipeline中的其余Middleware组件
+            
+            
+            // 自定义错误页                       
+            app.UseErrorPage();                                         //引用Microsoft.Owin.Diagnostics，添加错误页中间节到管道，遭遇异常时，会有专有页面展示Stack,Query,Cookies,Headers,Environment等信息
+            //app.UseExceptionHandler("/Home/Error");
+            
+            
+            //默认情况下，应用程序不返回Http状态码，除非加上UseStatusCodePages
+            app.UseStatusCodePages();
+            
+            
+            // Run方法会使得可以使管道断路，顾名思义就是终结管道向下执行不会调用next()委托，所以Run方法最好放在管道的最后来执行
+            app.Run(context =>
+            {
+                context.Response.ContentType = "text/plain";
+                return context.Response.WriteAsync("Hello, world1");
+            });
+            
+            
+            // Use不会主动断路整个HTTP管道，但是也不会主动调用下一个中间件，必须自行调用await next.Invoke()，如果不使用next，那么Run与Use两者相同
+            app.Use((context, next) =>
+            {
+                context.Response.ContentType = "text/plain";
+                return context.Response.WriteAsync("Hello, world1");
+            });
+            
+            
+            // 路径映射，为某一PathString定制中间件
+            app.Map("/map1", HandleMapTest);
+            // 特定条件的Map
+            app.MapWhen(
+                context => { return context.Request.Query.ContainsKey("username"); },
+                HandleMapTest
+            );
+            
+            
+            // URL Rewrite and URL Redirect                                                                                 // using Microsoft.AspNetCore.Rewrite;
+            // Microsoft.AspNetCore.Rewrite
+            using (StreamReader apacheModRewriteStreamReader = File.OpenText("ApacheModRewrite.txt"))
+            using (StreamReader iisUrlRewriteStreamReader = File.OpenText("IISUrlRewrite.xml")) 
+            {
+                var options = new RewriteOptions()
+                    .AddRedirect("redirect-rule/(.*)", "redirected/$1")                                                     // 可将/redirect-rule/1234/5678 重定向到 /redirected/1234/5678
+                    .AddRewrite(@"^rewrite-rule/(\d+)/(\d+)", "rewritten?var1=$1&var2=$2", skipRemainingRules: true)        // 可将/rewrite-rule/1234/5678 重写到 /rewritten?var1=1234&var=5678，skipRemainingRules：是否跳过后续规则
+                    .AddApacheModRewrite(apacheModRewriteStreamReader)
+                    .AddIISUrlRewrite(iisUrlRewriteStreamReader)
+                    .Add(MethodRules.RedirectXMLRequests)
+                    .Add(new RedirectImageRequests(".png", "/png-images"))                                                  // 可将/image.png 重定向到 /png-images/image.png
+                    .Add(new RedirectImageRequests(".jpg", "/jpg-images"));
+                app.UseRewriter(options);
+            }
+            
+            
+            // URL Redirect
+            {
+                var options = new RewriteOptions()
+                    .AddRedirectToHttps(301, 5001);                                                                         // 将状态码设为301 (Moved Permanently) ，变更端口为5001。（如不指定，默认状态码为302，端口为443）
+                    .AddRedirectToHttpsPermanent                                                                            // 从http重定向到https，状态码为301，默认端口号为443
+                app.UseRewriter(options);
+            }
+            
+            
+            // 配置跨域请求
+            app.UseCors(builder => 
+                builder.WithOrigins("http://example.com")                                                                   // 注意：无需尾部反斜杠
+                       .AllowAnyHeader()
+            );
+
+            // using Microsoft.AspNetCore.Http.Features;
+            // using Microsoft.AspNetCore.Server.Kestrel.Core;
+            // using Microsoft.AspNetCore.Server.Kestrel.Core.Features;
+            // 在Kestrel
+            app.Run(async (context) =>
+            {
+                context.Features.Get<IHttpMaxRequestBodySizeFeature>().MaxRequestBodySize = 10 * 1024;
+                context.Features.Get<IHttpMinRequestBodyDataRateFeature>().MinDataRate = new MinDataRate(bytesPerSecond: 100, gracePeriod: TimeSpan.FromSeconds(10));
+                context.Features.Get<IHttpMinResponseDataRateFeature>().MinDataRate = new MinDataRate(bytesPerSecond: 100, gracePeriod: TimeSpan.FromSeconds(10));
+
+                app.UseMvc();
+                app.UseMvc()
+                    routes =>
+                    {
+                        routes.MapRoute(
+                            name: "default",
+                            template: "{controller=Home}/{action=Index}/{id?}");
+                    }
+                ;
+            });
+            
+            
+            // WebSocket
+            app.Use(async (context, next) =>
+            {
+                if (context.WebSockets.IsWebSocketRequest)
+                {
+                    WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                    //await Echo(context, webSocket);
+                    var buffer = new byte[1024 * 4];
+                    WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    while (!result.CloseStatus.HasValue)                                                        // 当WebSocket关闭时，CloseStatus会由null变为非null
+                    {
+                        await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
+                        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    }
+                    await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                }
+                else
+                {
+                    //context.Response.StatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest;
+                    await next();
+                }
+            });
+        }
+    
+        public void HandleMapTest(IApplicationBuilder app){
+            app.Run(async (context) =>
+            {
+                await context.Response.WriteAsync("HandleMapTest Handler");
+            });
+        }
+    }
+}
+
+
+3.运行环境
+Core使用“ASPNETCORE_ENVIRONMENT”字段来描述当前运行环境名称这就是上文中提到的环境配置，官方预设了3个环境名分别是Development（开发环境）, Staging（测试环境）, Production（生产环境），在.\Properties\launchSettings.json中找到“ASPNETCORE_ENVIRONMENT”字段，可以发现默认情况下是Development。
+（1）设置
+•配置文件：在.\Properties\launchSettings.json
+•设置环境变量：
+windows : set ASPNETCORE_ENVIRONMENT=Development
+linux : export ASPNETCORE_ENVIRONMENT=Development
+•程序
+Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WARCHER", "Development");           // 环境变量
+new WebHostBuilder().UseEnvironment("Development");                                             // 直接配置环境
+WebHost.CreateDefaultBuilder().UseEnvironment("Development");                                   // 直接配置环境
+（2）获取
+在Starup.cs中的Configure方法中，通过env.IsDevelopment()，可以区分当前的运行环境，如：
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    if (env.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+        app.UseDatabaseErrorPage();
+        app.UseBrowserLink();
+    }
+    else
+    {
+        app.UseExceptionHandler("/Home/Error");
+    }
+}
+
+¤补充
+    在Startup中规定，ConfigureServices和Configure两个方法可以根据环境名称来命名和选择调用，命名规则为ConfigureServices{ENVIRONMENT}和Configure{ENVIRONMENT}。当 ASPNETCORE_ENVIRONMENT = "Development"，则程序会去匹配ConfigureServicesDevelopment 和 ConfigureDevelopment 方法（就好像Switch 语句中的 default一样的道理），如果找不到，则去匹配ConfigureServicesDevelopment 和 ConfigureDevelopment 方法，如果都没有就会抛出异常。
+
+
+2.Pipeline和Middleware
+Pipeline：那些处理http requests并返回responses的代码就组成了request pipeline(请求管道)
+Middleware：每层中间件接到请求后都可以直接返回或者调用下一个中间件。
+
+
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    app.Run(async (context) =>
+    {
+        await context.Response.WriteAsync("Hello, World!");
+    });
+    app.Use(async (context, next) =>
+    {
+        await next.Invoke();
+    });
+    app.UseMiddleware();
+    app.UseMiddleware<TMiddleware>(arg1, arg2);
+}
+
+class TMiddleware
+{
+    public TMiddleware(RequestDelegate next, string arg1, string arg2)
+    {
+    }
+}
+
+
+
+（4）Authentication中间件
+--------------------------------------------------------------------
+a.基本概念
+ASP.NET Core 的验证模型是 claims-based authentication。
+·Claim：属性特征。是对被验证主体特征的一种表述，比如：登录用户名是...，email是...，用户Id是...，其中的“登录用户名”，“email”，“用户Id”就是ClaimType。You can think of claims as being a statement about...That statement consists of a name and a value.
+·ClaimsIdentity：Claim集合+身份验证的类型。一组claims构成了一个identity，具有这些claims的identity就是 ClaimsIdentity ，驾照就是一种ClaimsIdentity，可以把ClaimsIdentity理解为“证件”，驾照是一种证件，护照也是一种证件。
+·ClaimsPrincipal：ClaimsIdentity集合+角色Role。ClaimsIdentity的持有者就是 ClaimsPrincipal ，一个ClaimsPrincipal可以持有多个ClaimsIdentity，就比如一个人既持有驾照，又持有护照。
+例：
+
+var claimsIdentity = new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.Name, loginName) }, "Basic");        // "Basic"就是证件类型
+var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+await context.Authentication.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+
+
+b.步骤
+    public void ConfigureAuth(IAppBuilder app)
+    {
+        // 使应用程序可以使用 Cookie 来存储已登录用户的信息
+        // 注意：此处是认证
+        // Microsoft.Owin.Security.OAuth.OAuthDefaults.AuthenticationType = "Bearer"
+        app.UseCookieAuthentication(new CookieAuthenticationOptions
+        {
+            // Microsoft.Owin.Security.OAuth.OAuthDefaults.AuthenticationType = "Bearer"
+            /**  其中
+                protected struct DefaultAuthenticationTypes
+                {
+                    public const string ApplicationCookie = "ApplicationCookie";
+                    public const string ExternalBearer = "ExternalBearer";
+                    public const string ExternalCookie = "ExternalCookie";
+                    public const string TwoFactorCookie = "TwoFactorCookie";
+                    public const string TwoFactorRememberBrowserCookie = "TwoFactorRememberBrowser";
+                }
+            **/
+            AuthenticationType = Microsoft.AspNet.Identity.Core.DefaultAuthenticationTypes.ApplicationCookie,           //是一个常量
+            // 当执行Controller的带有[Authorize]标记的Action，发现没有权限时，会跳转到此地址进行注册
+            LoginPath = new PathString("/Account/Login"),
+            // 如果不设置，默认为不过期
+            ExpireTimeSpan = TimeSpan.FromMinutes(5),
+        });
+        // Use a cookie to temporarily store information about a user logging in with a third party login provider
+        // 使用 Cookie 来临时存储有关使用第三方登录提供程序登录的用户的信息
+        //app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
+    }
+
+
+（1）Startup.cs
+    public void ConfigureServices(IServiceCollection services)
+    {
+        string defaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        // 默认方式，这样，DefaultSignInScheme, DefaultSignOutScheme, DefaultChallengeScheme, DefaultForbidScheme 等都会使用该 Scheme 作为默认值
+        services.AddAuthentication(defaultScheme);
+        // 或（同上）
+        services.AddAuthentication(option =>
+        {
+            options.DefaultScheme = defaultScheme;
+        })
+        // 自定义方式
+        services.AddAuthentication(option =>
+        {
+            option.DefaultAuthenticateScheme = defaultScheme;
+            option.DefaultChallengeScheme = defaultScheme;
+            option.DefaultSignInScheme = defaultScheme;
+        })
+        .AddCookie(option =>
+         {
+             option.LoginPath = "/login";                                       // 登陆地址
+             option.Cookie.Name = "My_SessionId";                               // sid
+             
+             // 设置登陆失败或者未登录授权的情况下，直接跳转的路径这里
+             option.Cookie.Path = "/";
+             // option.Cookie.Domain = "shenniu.core.com";
+             option.Cookie.HttpOnly = true;
+             option.Cookie.Expiration = new TimeSpan(0, 0, 30);
+             option.ExpireTimeSpan = new TimeSpan(0, 0, 30);
+         });
+         
+         // 不允许匿名访问（可选）
+         services.AddMvc(options =>
+         {
+             var policy = new AuthorizationPolicyBuilder()
+                             .RequireAuthenticatedUser()
+                             .Build();
+             options.Filters.Add(new AuthorizeFilter(policy));
+         });
+    }
+    public void Configure(IApplicationBuilder app)
+    {
+        // 启用身份认证
+        app.UseAuthentication();
+        // 启用授权（可自行定义）
+        //app.UseAuthorize();
+    }
+
+（2）Controller.cs
+    [AllowAnonymous]                                                            //允许匿名，可不需权限
+    [HttpGet]
+    public async Task<string> Login()
+    {
+        List<Claim> claims = new List<Claim>()
+        {
+            new Claim(ClaimTypes.Name, "zhaoyu"),
+            new Claim(ClaimTypes.Role, "user"),
+            new Claim(ClaimTypes.NameIdentifier, "12242")
+        };
+        // 创建ClaimsIdentity
+        // Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme = "Cookies"
+        ClaimsIdentity identity = new ClaimsIdentity(claims, "Cookie");
+        ClaimsPrincipal principal = new ClaimsPrincipal(identity);
+
+        await HttpContext.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, principal);
+        return "Login";
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<string> Logout()
+    {
+        await HttpContext.SignOutAsync();
+        return "Logout";
+    }
+
+    //¤注：
+    //HttpContext.SignIn()实际做了这些事情：
+    //1.将ClaimsIdentity信息保存在Cookie里;
+    //2.每次发生请求，即Application_AuthenticateRequest时，从cookie取出ClaimsIdentity信息，并包装成ClaimsPrincipal，放在HttpContext.Current.User中
+    //HttpContext.Current.User = new ClaimsPrincipal(identity);
+    
+    protected void Application_AuthenticateRequest()
+    {
+        //...
+        ClaimsIdentity identity = ...;        
+        ClaimsPrincipal principal = new System.Security.Claims.ClaimsPrincipal(identity);
+        //HttpContext.Current.User = principal;                                                                     //如果是ASP.NET/IIS托管
+        //request.GetRequestContext().Principal = principal;                                                        //传统？
+        request.GetOwinContext().Authentication.User = principal;                                                   //如果是自托管
+    }
+
+--------------------------------------------------------------------
+
+（5）
+
+
+
+
+
+三、配置文件
+O.Docker
+docker pull microsoft/dotnet
+
+A.常见配置文件类型
+1.appsettings.json      文件初始化的信息是本地数据库链接和日志logging配置信息，把原web.config和app.config的appsettings拿出来了
+2.gulpfile.js           加载一些js文件，css等
+3.project.json          项目工程包
+4.web.config            里面内嵌了一个aspNetCore节点
+5.Program.cs            文件里面有个main函数，这里是项目开启入口
+6.Startup.cs            文件主要是初始化设置的地方
+7.program&startup       关联的，首先程序进入program里面的main函数，在WebHostBuilder运行run之前会通过UseStartup进入到startup文件的各个方法中，顺序是：Startup（构造器初始化加载一些配置文件）-》ConfigureServices（添加各个服务的依赖关系）-》Configure
+8.bundleconfig.json     前台js/css的打包文件
+
+
+B.appsettings.json
+1.配置文件appsettings.json
+{
+  //用户配置信息
+  "AppSettings": {
+    //Redis缓存
+    "RedisCaching": {
+      "Enabled": true,
+      "ConnectionString": "10.18.200.177:6379"
+    }
+  }
+}
+
+2.定义映射类型
+    /// <summary>
+    /// 配置文件
+    /// </summary>
+    public class AppSettingsModel
+    {
+        public RedisCaching RedisCaching { get; set; }
+    }
+    /// <summary>
+    /// Redis
+    /// </summary>
+    public class RedisCaching {
+        /// <summary>
+        /// 是否启用
+        /// </summary>
+        public bool Enabled { get; set; }
+        /// <summary>
+        /// 链接信息
+        /// </summary>
+        public string ConnectionString { get; set; }
+    }
+
+3.获取配置文件信息
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
+
+// MVC方式
+class Startup
+{
+    // 此处是向Startup注入了Configuration
+    public Startup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
+    public IConfigurationRoot Configuration { get; }  
+    public void ConfigureServices(IServiceCollection services)
+    {
+        string filePath = "appsettings.json";
+        Microsoft.Extensions.Configuration.IConfigurationRoot config;
+        config = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
+            .SetBasePath(System.IO.Directory.GetCurrentDirectory())                             // nuget Microsoft.Extensions.Configuration.Fileextensions
+            .AddJsonFile(filePath, optional: true, reloadOnChange: true)                        // nuget Microsoft.Extensions.Configuration.Json
+            .Build();
+        // 或 config = Configuration;
+
+        // 方式一：直接取出
+        {
+            string connectionString = config["AppSettings:RedisCaching:ConnectionString"];
+        }
+        
+        IConfigurationSection section = config.GetSection("AppSettings");                   // 其中 public interface IConfigurationSection : IConfiguration
+        // 方式二：通过ConfiurationSection
+        {
+            AppSettingsModel appSettingsModel = section.Get<AppSettingsModel>();
+            string connectionString = appSettingsModel.RedisCaching.ConnectionString;
+        }
+        // 方式三：通过把ConfiurationSection注入ServiceCollection
+        IServiceCollection _services = services;                                                // 或 _service = new ServiceCollection();
+        {
+            // 注入
+            // 向ServiceCollection注入Section对象
+            _services.AddOptions()
+                    .Configure<AppSettingsModel>(section)                                        // 反序列化，并注入
+                    .BuildServiceProvider();
+            // 取出：使用IOptions<T>
+            AppSettingsModel appSettingsModel1 = _service.GetService<IOptions<AppSettingsModel>>().Value;
+            // 取出：使用IOptionsSnapshot<T>自动更新配置，而不需重启
+            AppSettingsModel appSettingsModel2 = _service.GetService<IOptionsSnapshot<AppSettingsModel>>().Value;
+        }
+        // 或 通过对Controller注入取出
+        public class XXXXController : Controller
+        {
+            public XXXXController(IOptions<AppSettingsModel> appSettingsModelOption)
+            {
+                AppSettingsModel appSettingsModel = appSettingsModelOption.Value;
+            }
+        }
+    }
+
+    public static T Grab<T>(string filePath, string sectionName)
+    {
+        Microsoft.Extensions.Configuration.IConfigurationRoot config = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
+            .SetBasePath(System.IO.Directory.GetCurrentDirectory())                             // nuget Microsoft.Extensions.Configuration.Fileextensions
+            .AddJsonFile(filePath, optional: true, reloadOnChange: true)                        // nuget Microsoft.Extensions.Configuration.Json
+            .Build();
+        IConfigurationSection section = config.GetSection(sectionName);
+        T t = section.Get<T>();                                                                 // 反序列化（也可以是集合）
+        return t;
+    }
+}
+
+
+
+
+
+四、功能讲解
+1.PhysicalFileProvider
+// You can iterate through its directory contents or get a specific file's information by providing a subpath.
+IFileProvider provider = new PhysicalFileProvider(applicationRoot);
+IDirectoryContents contents = provider.GetDirectoryContents("");                // the applicationRoot contents
+IFileInfo fileInfo = provider.GetFileInfo("wwwroot/js/site.js");                // a file under applicationRoot
+
+// To request a provider from a controller, specify it in the controller's constructor and assign it to a local field. Use the local instance from your action methods
+public HomeController(IFileProvider fileProvider)
+{
+    _fileProvider = fileProvider;
+}
+
+// 监视文件变化
+public static void Main(string[] args)
+{
+    Console.WriteLine("Monitoring quotes.txt for changes (Ctrl-c to quit)...");
+
+    while (true)
+    {
+        MainAsync().GetAwaiter().GetResult();
+    }
+}
+private static async Task MainAsync()
+{
+    IChangeToken token = _fileProvider.Watch("quotes.txt");
+    var tcs = new TaskCompletionSource<object>();
+
+    token.RegisterChangeCallback(state => 
+        ((TaskCompletionSource<object>)state).TrySetResult(null), tcs);
+
+    await tcs.Task.ConfigureAwait(false);
+
+    Console.WriteLine("quotes.txt changed");
+}
+
+2.版本控制
+using Microsoft.AspNetCore.Mvc.Versioning;
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services){
+        services.AddMvc();
+        services.AddApiVersioning();                                        // using Microsoft.AspNetCore.Mvc.Versioning; 默认必须显式指定版本
+        services.AddApiVersioning(options =>
+        {
+            options.ApiVersionReader = new MediaTypeApiVersionReader();                                     // 使用MediaType定义版本，即content-type: application/json;v=2.0
+            options.ApiVersionReader = new HeaderApiVersionReader("api-version");                           // 使用header定义版本，即api-version: 1.0
+            options.AssumeDefaultVersionWhenUnspecified = true;                                             // 是否支持默认版本，默认为false
+            options.DefaultApiVersion = new ApiVersion(1, 0);                                               // 指定默认版本号
+            options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);              // 如果没有在content-type媒体类型中定义版本，将使用最新的API版本
+        });
+        services.AddApiVersioning(options =>
+        {
+            
+            
+        }
+    }
+}
+
+[ApiVersion("2.0")]                                                         // 定义要支持 API 版本控制的控制器
+[Route("api/[controller]")]                                                 // http://localhost:5000/api/values?api-version=1.0
+[Route("api/v{version:apiVersion}/[controller]")]                           // http://localhost:5000/api/v1/values
+public class ValuesController : Controller
+{
+    
+    // GET api/values
+    [MapToApiVersion("1.0")]                                                // 定义特定Action API版本号
+    [HttpGet]
+    // 或 [HttpGet, MapToApiVersion("1.0")]
+    public IEnumerable<string> Get()
+    {
+        return Json(new string[] { "value1", "value2" });
+    }
+}
+
+
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+public class ValuesController : Controller
+{
+    [HttpGet, MapToApiVersion("1.0")]
+    public IActionResult Get()
+    {
+        return Json(new string[] { "value1", "value2" });
+    }
+}
+
+
+可以通过三种方式指定API版本：
+·查询字符
+·URL路径
+·媒体类型（Media Type）
+
+
+
+
+4.静态资源
+
+
+5.服务端的下载与上传
+（1）下载
+/// <summary>
+/// 虚拟文件地址输出下载
+/// </summary>
+/// <returns></returns>
+public IActionResult OnPostDown()
+{
+    var addrUrl = "/bak/love.apk";
+    
+    return File(addrUrl, "application/vnd.android.package-archive", Path.GetFileName(addrUrl));
+}
+/// <summary>
+/// 文件流的方式输出
+/// </summary>
+/// <returns></returns>
+public IActionResult OnPostDown01()
+{
+    var addrUrl = @"D:\F\学习\vs2017\netcore\Study.AspNetCore\WebApp02-1\wwwroot\bak\love.apk";
+    var stream = System.IO.File.OpenRead(addrUrl);
+    
+    return File(stream, "application/vnd.android.package-archive", Path.GetFileName(addrUrl));
+}
+
+/// <summary>
+/// 通过HttpClient获取另外站点的文件流，再输出（传说中的盗链）
+/// </summary>
+/// <returns></returns>
+public async Task<IActionResult> OnPostDown02()
+{
+    var path = "https://files.cnblogs.com/files/wangrudong003/%E7%89%B9%E4%BB%B701.gif";
+    HttpClient client = new HttpClient();
+    client.BaseAddress = new Uri(path);
+    var stream = await client.GetStreamAsync(path);
+    
+    return File(stream, "application/vnd.android.package-archive", Path.GetFileName(path));
+}
+
+（2）上传
+/// <summary>
+/// 文件上传
+/// </summary>
+/// <returns></returns>
+public IActionResult Upload()
+{
+    var files = Request.Form.Files;
+    save(files);
+    return OK();
+}
+
+/// <summary>
+/// 文件上传
+/// </summary>
+/// <returns></returns>
+public IActionResult Upload(List<IFormFile> files)
+{
+    save(files);
+    return OK();
+}
+
+
+private void save(List<IFormFile> files)
+{
+    var filePath = Path.GetTempFileName();
+    foreach (var formFile in files)
+    {
+        if (formFile.Length > 0)
+        {
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await formFile.CopyToAsync(stream);
+            }
+        }
+    }
+}
+
+
+
+
+6.依赖注入
+（1）普通依赖注入
+public void Program
+{
+    // 控制台依赖注入
+    public static void Main(string[] args)
+    {
+        // 注入
+        IServiceCollection services = new ServiceCollection()
+            .AddSingleton<ILoggerFactoryA, LoggerFactoryA>()
+            .AddTransient<ILoggerFactoryB>(new LoggerFactoryB())
+            .AddTransient<ILoggerFactoryC>(c => new LoggerFactoryC());
+        // 解析
+        IServiceProvider serviceProvider = services.BuildServiceProvider();
+        var memcachedClient = serviceProvider.GetService<ILoggerFactoryB>();
+        Console.WriteLine(memcachedClient);
+    }
+}
+
+（2）MVC依赖注入
+    public void ConfigureServices(IServiceCollection services)
+    {
+        // 这里是注入了数据库上下文，如果没有这里，刚才的Controller获取出来根本就获取不到数据信息
+        // Configuration.GetConnectionString("DefaultConnection")获取了配置文件appsettings.json中的DefaultConnection节点数据
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+        // 注入Indentity，目前这个IdentityRole在这里暂时没用到
+        services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+        // 注入
+        //services.AddTransient<>();        // Transient 服务在每次请求时被创建，它最好被用于轻量级无状态服务（如我们的Repository和ApplicationService服务）
+        //services.AddSingleton<>();        //  服务在第一次请求时被创建（或者当我们在ConfigureServices中指定创建某一实例并运行方法），其后的每次请求将沿用已创建服务。如果开发者的应用需要单例服务情景，请设计成允许服务容器来对服务生命周期进行操作，而不是手动实现单例设计模式然后由开发者在自定义类中进行操作。
+        //services.AddScoped<>();           // Scoped 服务在每次请求时被创建，生命周期横贯整次请求
+        //services.AddMemoryCache();        // MemoryCache缓存注入
+
+        // 注入例子
+        services.AddTransient<IEmailSender, AuthMessageSender>();
+        services.AddTransient<ISmsSender, AuthMessageSender>();
+        // 之后，在XXXController中通过构造方法public XXXController(ISmsSender sender)可进行注入
+        // 或通过以下方式获取
+        //public void Configure(IApplicationBuilder app)
+        //{
+        //    app.ApplicationServices.GetService<TTT>()
+        //}
+    }
+
+public class XXXXController :Controller
+{
+    public XXXXController()
+    {
+        
+    }
+    
+    public void XAction()
+    {}
+}
+
+
+
+7.AOP序列化
+（1）指定序列化
+[Produces("application/json")]
+public class AuthorsController
+{}
+
+（2）动态序列化
+路由                          格式化
+/products/GetById/5         默认输出格式
+/products/GetById/5.json    JSON 格式（如果配置了的话）
+/products/GetById/5.xml     XML 格式（如果配置了的话）
+
+
+[FormatFilter]
+public class ProductsController
+{
+  [Route("[controller]/[action]/{id}.{format?}")]
+  public Product GetById(int id)
+  {}
+}
+
+
+
+
+
+
+
+五、编译与部署
+https://docs.microsoft.com/zh-cn/aspnet/core/fundamentals/startup
+https://docs.microsoft.com/en-us/dotnet/core/deploying/index#self-contained-applications
+https://docs.microsoft.com/en-us/dotnet/core/tutorials/libraries
+·framework 文件存储位置：%systemroot%\Microsoft.NET\Framework
+·dot core nuget文件存储位置：%USERPROFILE%\.nuget\packages，如C:\Users\MPC\.nuget\packages
+·dot core rt/sdk文件存储位置：%ProgramFiles%\dotnet\store\x64\netcoreapp2.0，如C:\Program Files\dotnet\store\x64\netcoreapp2.0
+
+目录结构
+bin
+ \Debug 调试目录
+  \netcoreapp2.0 非独立发布
+  \PublishOutput 自定义发布
+ \Release 发布目录
+  \netcoreapp2.0 非独立发布，最小化的
+    \win10-x64   非独立发布，可执行文件的
+    \...
+  \PublishOutput 自定义发布
+
+
+默认情况下，bin\Debug目录下为不包含第三方依赖的程序文件，调试期间使用的是默认的 NuGet 包缓存，可在所有操作系统上的用户主目录（例如，Linux 上的 /home/user1 或 Windows 上的 C:\Users\user1）中的 .nuget/packages 目录找到它。
+bin\Release目录亦如此，但是不会生成“XML文档文件”
+
+bin\Debug\publish目录下为包含第三方依赖的程序文件
+
+
+1.cli编译命令
+·dotnet new [-t app|web|lib]
+·dotnet restore                                                        # 恢复，即下载 project 文件中的第三方依赖包到 Nuget 包缓存
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+¤dotnet restore 命令使用 NuGet 还原依赖项以及在 project 文件中指定的特定于项目的工具。 默认情况下，并行执行对依赖项和工具的还原。
+
+对于特定于项目的工具，dotnet restore 首先还原打包工具所在的包，然后继续还原 project 文件中指定的工具依赖项。
+dotnet restore 命令的行为会受 Nuget.Config 文件（如果有）中某些设置的影响。 例如，在 NuGet.Config 中设置 globalPackagesFolder 会将还原的 NuGet 包置于指定的文件夹中。 这是在 dotnet restore 命令中指定 --packages 选项的替代方法。 有关详细信息，请参阅 NuGet.Config reference（NuGet.Config 引用）。
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--configfile <FILE>
+供还原操作使用的 NuGet 配置文件 (NuGet.config)。
+--disable-parallel
+禁用并行还原多个项目。
+--force
+强制解析所有依赖项，即使上次还原已成功，也不例外。 这相当于删除 project.assets.json 文件。
+-h|--help
+打印出有关命令的简短帮助。
+--ignore-failed-sources
+如果存在符合版本要求的包，则源失败时警告。
+--no-cache
+指定不缓存包和 HTTP 请求。
+--no-dependencies
+当使用项目到项目 (P2P) 引用还原项目时，还原根项目，不还原引用。
+--packages <PACKAGES_DIRECTORY>
+指定还原包的目录。为了还原依赖项，NuGet 需要包所在的源。 通常通过 NuGet.config 配置文件提供源。 安装 CLI 工具时提供一个默认的配置文件。 可以通过在项目目录中创建自己的 NuGet.config 文件来指定其他源。 也可以在命令提示符处指定每次调用的其他源。对于依赖项，使用 --packages 参数指定还原操作期间放置还原包的位置。 如未指定，将使用默认的 NuGet 包缓存，可在所有操作系统上的用户主目录（例如，Linux 上的 /home/user1 或 Windows 上的 C:\Users\user1）中的 .nuget/packages 目录找到它。
+-r|--runtime <RUNTIME_IDENTIFIER>
+指定程序包还原的运行时。 这用于还原 .csproj 文件中的 <RuntimeIdentifiers> 标记中未显式列出的运行时的程序包。 有关运行时标识符 (RID) 的列表，请参阅 RID 目录。 通过多次指定此选项提供多个 RID。
+-s|--source <SOURCE>
+指定要在还原操作期间使用的 NuGet 包源。 这会替代 NuGet.config 文件中指定的所有源。 多次指定此选项可以提供多个源。
+--verbosity <LEVEL>
+设置命令的详细级别。 允许使用的值为 q[uiet]、m[inimal]、n[ormal]、d[etailed] 和 diag[nostic]。
+
+$ dotnet restore
+$ dotnet restore --verbosity Error
+
+·dotnet build
+-c|--configuration {Debug|Release}
+  Defines the build configuration. The default value is Debug.(But the default value is Release in VS2017.)
+-f|--framework <FRAMEWORK>
+  Compiles for a specific framework. The framework must be defined in the project file.
+--force
+  Forces all dependencies to be resolved even if the last restore was successful. This is equivalent to deleting the project.assets.json file.
+-h|--help
+  Prints out a short help for the command.
+--no-dependencies
+  Ignores project-to-project (P2P) references and only builds the root project specified to build.
+--no-incremental
+  Marks the build as unsafe for incremental build. This turns off incremental compilation and forces a clean rebuild of the project's dependency graph.
+--no-restore
+  Doesn't perform an implicit restore during build.
+-o|--output <OUTPUT_DIRECTORY>
+  Directory in which to place the built binaries. You also need to define --framework when you specify this option.
+-r|--runtime <RUNTIME_IDENTIFIER>
+  Specifies the target runtime. For a list of Runtime Identifiers (RIDs), see the RID catalog.
+-v|--verbosity <LEVEL>
+  Sets the verbosity level of the command. Allowed values are q[uiet], m[inimal], n[ormal], d[etailed], and diag[nostic].
+--version-suffix <VERSION_SUFFIX>
+  Defines the version suffix for an asterisk (*) in the version field of the project file. The format follows NuGet's version guidelines.
+
+·dotnet run                                                            # 无需任何显式编译或启动命令即可运行源代码
+$ dotnet run --configuration Release -- --help                          # 运行当前目录中的项目
+$ dotnet run --project /projects/proj1/proj1.csproj                     # 运行指定的项目
+·dotnet clean
+$ dotnet clean                                                          # 清除项目输出
+·dotnet pack                                                           # 将代码打包到 NuGet 包
+$ dotnet pack
+·dotnet publish                                                        # 发布
+$ dotnet publish
+·dotnet store                                                          # 将指定的程序集存储到Runtime package store（运行时包存储区）
+$ dotnet store
+$ dotnet restore                                                        # 如果要包含第三方依赖项，通过此命令下载以恢复第三方依赖项的nuget包
+·dotnet restore
+$ dotnet publish -c Release -r win10-x64                                # 针对不同平台进行编译
+$ dotnet publish -c Release -r win7-x64                                 # 针对不同平台进行编译
+$ dotnet publish -c Release -r osx.10.11-x64                            # 针对不同平台进行编译
+$ dotnet publish -r ubuntu.14.04-x64                                    # 针对不同平台进行编译
+$ dotnet publish -r centos.7-x64                                        # 针对不同平台进行编译
+
+$ dotnet publish -f net461                                              # 针对不同框架进行编译
+$ dotnet publish -f netstandard2.0                                      # 针对不同框架进行编译
+
+
+2.编译配置
+̑.csproj
+·FDD
+对于 FDD，仅部署应用和任何第三方依赖项。 不需要部署 .NET Core，因为应用将使用目标系统上存在的 .NET Core 版本。 这是 .NET Core 应用的默认部署模型。
+因为此为默认方式，所以直接发布即可。
+·SCD
+对于独立部署，可以部署应用和所需的第三方依赖项以及生成应用所使用的 .NET Core 版本。 创建 SCD 不包括各种平台上的 .NET Core 本机依赖项，因此运行应用前这些依赖项必须已存在。
+.csproj
+
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 0. 基本语法 -->
+  <!-- Debug/Release -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'" />
+  <!-- Platform -->
+  <PropertyGroup Condition="'$(Platform)'=='x64'" />
+  <!-- 目标框架 -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' " />
+  <!-- Or语法 -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net452' />
+  <!-- OS -->
+  <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
+  <!-- Exist语法 -->
+  <Error Condition="!Exists('..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props')"
+    Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props'))" />
+  <!-- -------- -->
+  <PropertyGroup  />
+
+  <!-- 1. 指定版本及平台 -->
+  <PropertyGroup>
+    <!-- 输出格式 -->
+    <OutputType>Exe</OutputType>
+    <!-- 单个目标框架TFM （在依赖项中体现） -->
+    <TargetFramework>netstandard1.4;net40;net45;netcoreapp2.0</TargetFramework>
+    <!-- 多个目标框架TFM （在依赖项中体现） -->
+    <TargetFrameworks>netstandard1.4;net40;net45;netcoreapp2.0</TargetFrameworks>
+    <!-- SCD：指定针对某OS进行独立部署 -->
+    <RuntimeIdentifiers>win10-x64;win7-x64;osx.10.11-x64;centos.7-x64</RuntimeIdentifiers>
+    <!-- 编译时，是否生成nuget包 -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <!-- 配置当前程序集支持的目标框架 -->
+    <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">$(PackageTargetFallback);dotnet5.6;portable-net45+win8</PackageTargetFallback>
+  </PropertyGroup>
+
+  <!-- 2. 引入自定义常量（预处理指令可用到） -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <!--
+        用原生常量+自定义常量（类似linux的export，windows的path），这里的常量是赋予了布尔值true，即CORECLR=True，与在.cs文件中，加入#define debug的方式一样
+        #define CORECLR
+        public class Demo
+        {
+            public void Main(string[] args)
+            {
+                #if CORECLR
+                    internal readonly HttpClientHandler HttpHandler;
+                #else
+                    internal readonly WebRequestHandler HttpHandler;
+                #endif
+                // ...
+            }
+        }
+     -->
+    <DefineConstants>$(DefineConstants);CORECLR</DefineConstants>
+  </PropertyGroup>
+
+  <!-- 3. 编译项 -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <!-- 生成XML文档 -->
+    <DocumentationFile>bin\Release\netstandard2.0\OSS.Http.xml</DocumentationFile>
+    <!-- MvcRazor纳入编译发布 -->
+    <MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
+  </PropertyGroup>
+
+  <!-- 3. 引入依赖项 -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net452' ">
+      <!-- SCD：指定包含第三方依赖项进行独立部署,同时还要通过nuget安装第三方依赖项 -->
+      <!-- “nuget”引用 -->
+      <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+      <!-- “GAC程序集”引用 -->
+      <Reference Include="System.Net.Http" />
+      <Reference Include="System.Threading.Tasks" />
+      <!-- “自定义程序集”引用 -->
+      <Reference Include="SevenZipSharp">
+          <HintPath>..\Packages\7z\SevenZipSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="SevenZipSharp">
+          <HintPath>$(OutputPath)\SevenZipSharp.dll</HintPath>
+      </Reference>
+      <!-- “项目”引用 -->
+      <ProjectReference Include="..\Module\SevenZip\SevenZip.csproj" />
+
+      <!-- 复制到输出目录：不复制 -->
+      <None Remove="Lib\Newtonsoft.Json.dll" />
+      <!-- 生成操作：嵌入的资源 -->
+      <EmbeddedResource Include="Lib\Newtonsoft.Json.dll" />
+      <!-- ？？？？？？？？？？？？不知 -->
+      <Compile Remove="Lib\Newtonsoft.Json.dll" />Lib\Newtonsoft.Json.dll
+      <!-- ？？？？？？？？？？？？不知 -->
+      <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="1.0.0" />
+      
+      <None Remove="Lib\Newtonsoft.Json.dll" />
+          <CopyToOutputDirectory>PreserveNewest<CopyToOutputDirectory>
+          <Link>libuv.dll</Link>
+      </None>
+  </ItemGroup>
+  
+</Project>
+★注意：.csproj文件编辑后，需要重新生成
+
+★Runtime IDentifier
+RID is short for Runtime IDentifier
+Portable（默认）                             CentOS                                                  Ubuntu
+ win-x86                                      centos-x64                                              ubuntu-x64
+ win-x64                                      centos.7-x64                                            ubuntu.14.04-x64
+Windows 7 / Windows Server 2008 R2           Debian                                                   ubuntu.14.10-x64
+ win7-x64                                     debian-x64                                              ubuntu.15.04-x64
+ win7-x86                                     debian.8-x64                                            ubuntu.15.10-x64
+Windows 8 / Windows Server 2012              Fedora                                                   ubuntu.16.04-x64
+ win8-x64                                     fedora-x64                                              ubuntu.16.10-x64
+ win8-x86                                     fedora.24-x64                                          Ubuntu derivatives
+win8-arm                                      fedora.25-x64 (.NET Core 2.0 or later versions)         linuxmint.17-x64
+Windows 8.1 / Windows Server 2012 R2          fedora.26-x64 (.NET Core 2.0 or later versions)         linuxmint.17.1-x64
+ win81-x64                                   Gentoo (.NET Core 2.0 or later versions)                 linuxmint.17.2-x64
+ win81-x86                                    gentoo-x64                                              linuxmint.17.3-x64
+ win81-arm                                   openSUSE                                                 linuxmint.18-x64
+Windows 10 / Windows Server 2016              opensuse-x64                                            linuxmint.18.1-x64 (.NET Core 2.0 or later versions)
+ win10-x64                                    opensuse.42.1-x64
+ win10-x86
+ win10-arm
+ win10-arm64
+
+Oracle Linux                                 Red Hat Enterprise Linux                                Tizen (.NET Core 2.0 or later versions)
+ ol-x64                                       rhel-x64                                                tizen
+ ol.7-x64                                     rhel.6-x64 (.NET Core 2.0 or later versions)
+ ol.7.0-x64                                   rhel.7-x64
+ ol.7.1-x64                                   rhel.7.1-x64
+ ol.7.2-x64                                   rhel.7.2-x64
+                                              rhel.7.3-x64 (.NET Core 2.0 or later versions)
+                                              rhel.7.4-x64 (.NET Core 2.0 or later versions)
+
+
+
+
+̑.cs
+-----------------------------------------------------------------------------------------------
+using System;
+using System.Text.RegularExpressions;
+#if NET40
+// This only compiles for the .NET Framework 4 targets
+using System.Net;
+#else
+ // This compiles for all other targets
+using System.Net.Http;
+using System.Threading.Tasks;
+#endif
+
+namespace MultitargetLib
+{
+    public class Library
+    {
+#if NET40
+        private readonly WebClient _client = new WebClient();
+        private readonly object _locker = new object();
+#else
+        private readonly HttpClient _client = new HttpClient();
+#endif
+
+#if NET40
+        // .NET Framework 4.0 does not have async/await
+        public string GetDotNetCount()
+        {
+            string url = "http://www.dotnetfoundation.org/";
+
+            var uri = new Uri(url);
+
+            string result = "";
+
+            // Lock here to provide thread-safety.
+            lock(_locker)
+            {
+                result = _client.DownloadString(uri);
+            }
+
+            int dotNetCount = Regex.Matches(result, ".NET").Count;
+
+            return $"Dotnet Foundation mentions .NET {dotNetCount} times!";
+        }
+#else
+        // .NET 4.5+ can use async/await!
+        public async Task<string> GetDotNetCountAsync()
+        {
+            string url = "http://www.dotnetfoundation.org/";
+
+            // HttpClient is thread-safe, so no need to explicitly lock here
+            var result = await _client.GetStringAsync(url);
+
+            int dotNetCount = Regex.Matches(result, ".NET").Count;
+
+            return $"dotnetfoundation.org mentions .NET {dotNetCount} times in its HTML!";
+        }
+#endif
+    }
+}
+
+如果使用 dotnet build 生成此项目，则在 bin/ 文件夹下有三个目录：
+net40/
+net45/
+netstandard1.4/
+-----------------------------------------------------------------------------------------------
+
+
+3.IIS部署
+A.步骤
+★第一步
+安装 Windows Server Hosting 托管捆绑包 或 单独安装 AspNetCoreModule 模块
+a.安装Windows Server Hosting (x86/x64)
+ 在托管系统上安装 .NET Core Windows Server 托管捆绑包，包括：●.NET Core 运行时  ●.NET Core 库  ●ASP.NET Core 模块
+ 该模块创建 IIS 与 Kestrel 服务器之间的反向代理。如果系统没有 Internet 连接，请先获取并安装 Microsoft Visual C++ 2015 Redistributable（链接：https://www.microsoft.com/download/details.aspx?id=53840），再安装 .NET Core Windows Server 托管捆绑包。
+b.仅安装.NET Core Windows Server Hosting模块（链接：https://aka.ms/dotnetcore.2.0.0-windowshosting，https://go.microsoft.com/fwlink/?linkid=844461）
+¤不管哪种安装，安装之后，IIS模块中会增加“AspNetCoreModule”模块选项。
+★第二步
+重启系统，或在命令提示符处依次执行 net stop was /y 和 net start w3svc，了解系统路径的更改。
+注意事项：
+安装后要重启iis，即iisreset，否则会出现以下提示：
+------------------------------------------------------------------------------
+HTTP Error 502.5 - Process Failure
+
+Common causes of this issue:
+The application process failed to start.
+The application process started but then stopped.
+The application process started but failed to listen on the configured port.
+------------------------------------------------------------------------------
+★第三步
+部署网站，且Application Pool改为“无托管”
+目录权限，添加IIS_IUSRS权限
+
+
+B.ASP.NET 核心模块配置参考
+a.独立部署web.config
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <handlers>
+      <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModule" resourceType="Unspecified" />
+    </handlers>
+    <aspNetCore processPath=".\LX.EduConnect.exe" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" />                         <!-- 此处不同 -->
+  </system.webServer>
+</configuration>
+<!--ProjectGuid: f692f8a4-fee8-4a74-8f7c-eac9ba81ca6d-->
+
+b.非独立部署web.config
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <handlers>
+      <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModule" resourceType="Unspecified" />
+    </handlers>
+    <aspNetCore processPath="dotnet" arguments=".\LX.EduConnect.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" />      <!-- 此处不同 -->
+    <!-- 或 -->
+    <aspNetCore ...>
+      <environmentVariables>
+        <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Development" />
+        <environmentVariable name="CONFIG_DIR" value="f:\application_config" />
+      </environmentVariables>
+    </aspNetCore>
+  </system.webServer>
+</configuration>
+<!--ProjectGuid: f692f8a4-fee8-4a74-8f7c-eac9ba81ca6d-->
+
+Q.问题
+1.
+Q:提示以下内容
+------------------------
+模块        IIS Web Core 
+通知        未知 
+处理程序    尚未确定 
+错误代码    0x8007000d 
+配置错误
+配置文件    \\?\F:\website\core.educonnect.ljlx.com\web.config 
+------------------------
+A:
+未安装dotnet core模块
+
+2.
+Q:提示以下内容
+------------------------------------------------------------------------------
+HTTP Error 502.5 - Process Failure
+
+Common causes of this issue:
+The application process failed to start.
+The application process started but then stopped.
+The application process started but failed to listen on the configured port.
+------------------------------------------------------------------------------
+
+3.VS中通过控制台启动MVC
+Core的Web项目默认通过IIS Express启动，如果想看到控制台输出，可以项目右键/属性/调试/启动，将IIS Express改为可执行文件，改成Kestrel方式，就可以看到控制台了
+
+
+六、项目行为
+A.打包（package）：生成nupkg包，并添加到本地nuget源
+1.在自认为合适的位置新建一个可作为本地nuget源的文件夹，在Nuget包管理器/程序包源中，将该文件夹添加为源
+2.预打包成nupkg的类库项目鼠标右键/打包，将类库打包为nupkg文件
+3.将nupkg文件复制到源文件夹内
+4.要引用该类库时，直接引用该nupkg包即可
+
+
+
+
+
+七、Controller
+1.Filter
+asp.net core MVC 过滤器之ExceptionFilter过滤器（一）
+asp.net core MVC 过滤器之ActionFilter过滤器（二）
+asp.net core MVC 过滤器之ResultFilter过滤器（三）
+asp.net core MVC 过滤器之ResourceFilter过滤器（四）
+asp.net core MVC 过滤器之AuthorizationFilter过滤器（五）
+
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddMvc(options =>
+        {
+            options.Filters.Add<HttpGlobalExceptionFilter>();
+        }
+    );
+}
+
+2.ControllerAttribute
+public class PocoController
+{}
+
+[Controller]
+public class Poco
+
+
+
+
+    public class BasicController : Controller
+    {
+        /// <summary>
+        /// 获取AccessToken
+        /// </summary>
+        /// <returns></returns>
+        public string GetAccessToken(IOptions<AppSettingsModel> settings)
+        {
+            string accessToken = AccessTokenContainer.TryGetAccessToken(settings.Value.WeixinAppId, settings.Value.WeixinAppSecret);
+            return accessToken;
+        }
+    }
+
+
+
+3.请求大小
+方式一
+.UseKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = null;
+}
+
+方式二
+[HttpPost]
+[RequestSizeLimit(100_000_000)]
+//或[DisableRequestSizeLimit]
+public IActionResult MyAction([FromBody] MyViewModel data){
+}
+
+方式三
+HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>().MaxRequestBodySize = 100_000_000;
+
+
+4.获取非nginx的真实ip
+location / {
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;                                                  # 默认情况下，Nginx并不会对X-Forwarded-For头做任何的处理，除非用户使用proxy_set_header 参数设置
+}
+
+
+
+using Microsoft.AspNetCore.HttpOverrides;
+
+    // enable support for X-Forwarded-For
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto                    // ForwardedHeaders = ForwardedHeaders.All
+    });
+    app.UseAuthentication();
+
+// 客户端，Request.HttpContext获取直接访问ip
+Request.HttpContext.Connection.RemoteIpAddress
+// 客户端，Request.Headers获取初始真实访问ip
+Request.Headers["X-Forwarded-For"]
+// 服务端，Request.HttpContext获取响应服务所在服务器的ip
+Request.HttpContext.Connection.LocalIpAddress
+
+
+
+
+class Program
+{
+    public string Get<T>()
+    {
+      return typeof(T).FullName;
+    }
+  }
+
+
+var genMethod = new Program().GetType().GetTypeInfo().GetMethod("Get").MakeGenericMethod(typeof(int));
+var obj = genMethod.Invoke(p, new object[] { });
+
+5.文件上传/下载
+（1）上传
+<form method="post" enctype="multipart/form-data" asp-controller="UpLoadFile" asp-action="FileSave">
+    <div>
+        <div>
+            <p>Form表单多个上传文件:</p>
+            <input type="file" name="files" multiple />
+            <input type="submit" value="上传" />
+        </div>
+    </div>
+</form>
+
+public async Task<IActionResult> FileSave(List<IFormFile> files)
+{
+    // var files = Request.Form.Files;                                                          // 当ajax方式也可取到
+    long size = files.Sum(f => f.Length);
+    string webRootPath = _hostingEnvironment.WebRootPath;
+    string contentRootPath = _hostingEnvironment.ContentRootPath;
+    foreach (var formFile in files)
+    {
+        if (formFile.Length > 0)
+        {
+
+            string fileExt = GetFileExt(formFile.FileName);                                     // 文件扩展名，不含“.”
+            long fileSize = formFile.Length;                                                    // 获得文件大小，以字节为单位
+            string newFileName = System.Guid.NewGuid().ToString() + "." + fileExt;              // 随机生成新的文件名
+            var filePath = webRootPath +"/upload/" + newFileName;
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                
+                await formFile.CopyToAsync(stream);
+            }
+        }
+    }
+    return Ok(new { count = files.Count, size });
+}
+
+（2）下载
+/// <summary>
+/// 文件流的方式输出
+/// </summary>
+/// <returns></returns>
+public IActionResult DownLoad(string file)
+{
+    var addrUrl = file;
+    var stream = System.IO.File.OpenRead(addrUrl);
+    string fileExt = GetFileExt(file);
+    //获取文件的ContentType
+    var provider = new FileExtensionContentTypeProvider();
+    var memi = provider.Mappings[fileExt];
+    return File(stream, memi, Path.GetFileName(addrUrl));
+}  
+
+
+
+
+八、调试
+·工具- 选型 – 调试 - 常规
+╳启用“仅我的代码”（仅限托管）
+√启用.NET Framework 源代码单步执行
+√启用源服务器支持
+√启用源链接支持
+·工具- 选项 – 调试 - 符号
+添加符号服务器：
+√DotnetCore版本：https://dotnet.myget.org/F/dotnet-core/symbols/ & 微软符号服务器
+√Framework版本：http://referencesource.microsoft.com/symbols
+
+
+
+
+
+
+八十八、Windows服务
+在dotnet 中有topshelf 可以很方便的写windows 服务并且安装也是很方便的，命令行 运行.exe install 就直接把exe 程序安装成windows。
+在dotnet core 2.0 中 我们也有一个很方便的dll 来试用 https://github.com/PeterKottas/DotNetCore.WindowsService 通过Nuget来安装 Using nuget: Install-Package PeterKottas.DotNetCore.WindowsService
+
+A.
+// 创建服务框架
+public class ExampleService : IMicroService
+{
+	public void Start()
+	{
+		Console.WriteLine("I started");
+	}
+	
+	public void Stop()
+	{
+		Console.WriteLine("I stopped");
+	}
+}
+// 或
+public class ExampleService : MicroService, IMicroService
+{
+    public void Start()
+    {
+        this.StartBase();
+        Timers.Start("Poller", 1000, () =>
+        {
+            Console.WriteLine("Polling at {0}\n", DateTime.Now.ToString("o"));
+        },
+        (e) =>
+        {
+            Console.WriteLine("Exception while polling: {0}\n", e.ToString());
+        });
+        Console.WriteLine("I started");
+    }
+
+    public void Stop()
+    {
+        this.StopBase();
+        Console.WriteLine("I stopped");
+    }
+}
+
+
+
+
+
+
+// 启用服务
+ServiceRunner<ExampleService>.Run(config =>
+{
+    var name = config.GetDefaultName();
+    config.Service(serviceConfig =>
+    {
+        serviceConfig.ServiceFactory((extraArguments) =>
+        {
+            return new ExampleService();
+        });
+        serviceConfig.OnStart((service, extraArguments) =>
+        {
+            Console.WriteLine("Service {0} started", name);
+            service.Start();
+        });
+
+        serviceConfig.OnStop(service =>
+        {
+            Console.WriteLine("Service {0} stopped", name);
+            service.Stop();
+        });
+        
+        serviceConfig.OnInstall(service =>
+        {
+            Console.WriteLine("Service {0} installed", name);
+        });
+        
+        serviceConfig.OnUnInstall(service =>
+        {
+            Console.WriteLine("Service {0} uninstalled", name);
+        });
+        
+        serviceConfig.OnPause(service =>
+        {
+            Console.WriteLine("Service {0} paused", name);
+        });
+        
+        serviceConfig.OnContinue(service =>
+        {
+            Console.WriteLine("Service {0} continued", name);
+        });
+
+        serviceConfig.OnError(e =>
+        {
+            Console.WriteLine("Service {0} errored with exception : {1}", name, e.Message);
+        });
+    });
+});
+
+
+
+
+九十七、回收
+参考资料：https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/fundamentals
+1.分类
+Server GC（默认）
+主要应用于多处理器系统，并且作为ASP.NET Core宿主的默认配置。它会为每个处理器都创建一个GC Heap,并且会并行执行回收操作。该模式的GC可以最大化吞吐量和较好的收缩性。这种模式的特点是初始分配的内存较大，并且尽可能不回收内存，进行回收用时会很耗时，并进行内存碎片整理工作。用一句简单的话说，这个就是贪婪模式，通过尽可能多的获得内存和少回收来得到更好的性能。结果就是高内存使用率性能较好。
+
+Workstation GC
+主要应用于单处理器系统，Workstation GC尽可能地通过减少垃圾回收过程中程序的暂停次数来提高性能。低负载且不常在后台（如服务）执行任务的应用程序，可以在禁用并发垃圾回收的情况下使用工作站垃圾回收。特点是会频繁回收，来阻止一次较长时间的回收。结果就是低内存使用率性能较差。
+
+
+2.使用
+·开发环境
+在开发环境，你可以编辑你的项目文件，加上以下配置，重新生成即可：
+<PropertyGroup> 
+  <ServerGarbageCollection>false</ServerGarbageCollection> 
+</PropertyGroup>
+
+·生产环境
+可以不用修改重新部署，直接到你的程序中找到 *.runtimeconfig.json，如：ZKEACMS.WebHost.runtimeconfig.json，修改"System.GC.Server": false，重启程序即可：
+"configProperties": {
+  "System.GC.Server": false
+}
+
+
+3.简单测试
+以下测试结果都在同一台计算机上，配置如下：
+Windows 7 Ultimate
+Intel Core I3-3220 @ 3.30 GHZ
+8G内存，可用空间3GB
+SQL Server 2014
+被测试的程序是ZKEACMS，首页，单面压力测试，5000个请求，1000个并发。测试结果如下：
+Server GC :
+响应结果如下，大概167.81 Req/s，这个结果并不是每次都一样，会有所偏差，内存使用涨到差不多600多M左右，期间会有上下上下浮动。
+Workstation GC :
+响应结果如下图所示，大概151.33 Req/s，看起来是要比Server GC差一点点，并且多次测试结果，总体都是更差些。内存使用情况一直在200M左右浮动，反复的压力测试，也不会有大的大起大落，这与它积极的回收有关系。
+
+
+
+九十七、其他
+.NET Core默认不支持GB2312，使用Encoding.GetEncoding("GB2312")的时候会抛出异常
+解决方案：
+手动安装System.Text.Encoding.CodePages包，即Install-Package System.Text.Encoding.CodePages，然后运行一下Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);之后就可以正常使用Encoding.GetEncoding("GB2312")了。
+
+
+
+九十八、插件
+1.
+编辑的csproj文件推荐NuGet 安装包： Project File Tools
+https://marketplace.visualstudio.com/items?itemName=ms-madsk.ProjectFileTools
+
+ASP.NET Core Tag Helpers 智能提示：Razor Language Services
+https://marketplace.visualstudio.com/items?itemName=ms-madsk.RazorLanguageServices
+
+
+
+九十九、常见问题整理
+1.安装时报0x80070490 找不到元素
+这里应该是vs只装了web没有装c++
+下载一个 VC_redist.x64.exe 安装就行了
+https://github.com/dotnet/core/issues/271
+ 
+2.No executable found matching command "bower"
+屏蔽project.json中的 scripts
+  //"scripts": {
+  //  "prepublish": [ "bower install", "dotnet bundle" ],
+  //  "postpublish": [ "dotnet publish-iis --publish-folder %publish:OutputPath% --framework %publish:FullTargetFramework%" ]
+  //},
+ 
+3.中文编码问题
+首先安装System.Text.Encoding.CodePages包(Install-Package System.Text.Encoding.CodePages)
+然后在Startup.cs的Configure方法中加入 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)
+就可以正常使用Encoding.GetEncoding("GB2312")了
+
+4.提示关于api-ms-win-crt-runtimel1-1-0.dll缺失的解决方案
+安装VC redit.exe程序解决：https://www.microsoft.com/zh-cn/download/details.aspx?id=48145
+vc_redist.x64.exe
+
+5.core2.0.2及以下版本，引用dll时，报System.InvalidOperationException_ Can not find compilation library location for package 'XXX'
+public class MvcConfiguration : IDesignTimeMvcBuilderConfiguration
+{
+    private class DirectReferenceAssemblyResolver : ICompilationAssemblyResolver
+    {
+        public bool TryResolveAssemblyPaths(CompilationLibrary library, List<string> assemblies)
+        {
+            if (!string.Equals(library.Type, "reference", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+            var paths = new List<string>();
+            foreach (var assembly in library.Assemblies)
+            {
+                var path = Path.Combine(ApplicationEnvironment.ApplicationBasePath, assembly);
+                if (!File.Exists(path))
+                {
+                    return false;
+                }
+                paths.Add(path);
+            }
+            assemblies.AddRange(paths);
+            return true;
+        }
+    }
+    public void ConfigureMvc()
+    {
+        typeof(CompilationLibrary)
+        .GetTypeInfo()
+        .GetDeclaredField("<DefaultResolver>k__BackingField")
+        .SetValue(null, new CompositeCompilationAssemblyResolver(new ICompilationAssemblyResolver[]
+        {
+            new DirectReferenceAssemblyResolver(),
+            new AppBaseCompilationAssemblyResolver(),
+            new ReferenceAssemblyPathResolver(),
+            new PackageCompilationAssemblyResolver(),
+        }));
+    }
+}
+
+public class Startup
+{
+   public void ConfigureServices(IServiceCollection services)
+        {
+            var mvcBuilder =
+                services.AddMvc();
+                //services.AddMvc(c =>
+                //    c.Conventions.Add(new ApiExplorerGetsOnlyConvention())
+                //);
+            new MvcConfiguration().ConfigureMvc(mvcBuilder);
+        }
+}
+
+6.为Core MVC添加HttpResponseMessage返回类型（否则返回的是HttpResponseMessage的Json类型字符串）
+https://stackoverflow.com/questions/37429190/asp-net-core-httprequestmessage-returns-strange-json-message
+According to this article, ASP.NET Core MVC does not support HttpResponseMessage-returning methods by default.
+If you want to keep using it, you can, by using WebApiCompatShim:
+1)Add reference to Microsoft.AspNetCore.Mvc.WebApiCompatShim to your project.
+2)Configure it in ConfigureServices(): services.AddMvc().AddWebApiConventions();
+即：
+1）安装 nuget 包 Microsoft.AspNetCore.Mvc.WebApiCompatShim
+2）在 Startup -> ConfigureServices 中，在 AddMvc() 之后添加 AddWebApiConventions() 即可：
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddMvc().AddWebApiConventions();
+}
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    app.UseMvc(routes =>
+    {
+        routes.MapRoute(
+            name: "default",
+            template: "{controller=Home}/{action=Index}/{id?}");
+    });
+}
+
+7.
+Q：运行独立部署包时，提示：
+Failed to load 8숬 error: libunwind.so.8: cannot open shared object file: No such file or directory
+Failed to bind to CoreCLR at '/usr/local/app/LX.EduConnect/libcoreclr.so'
+A：
+$ yum install libunwind
+
+Q：运行独立部署包时，提示：
+FailFast: Couldn't find a valid ICU package installed on the system. Set the configuration flag System.Globalization.Invariant to true if you want to run with no globalization support.
+   at System.Environment.FailFast(System.String)
+   at System.Globalization.GlobalizationMode.GetGlobalizationInvariantMode()
+   at System.Globalization.GlobalizationMode..cctor()
+   at System.Globalization.CultureData.CreateCultureWithInvariantData()
+   at System.Globalization.CultureData.get_Invariant()
+   at System.Globalization.CultureData.GetCultureData(System.String, Boolean)
+   at System.Globalization.CultureInfo.InitializeFromName(System.String, Boolean)
+   at System.Globalization.CultureInfo.Init()
+   at System.Globalization.CultureInfo..cctor()
+   at System.StringComparer..cctor()
+   at System.AppDomainSetup.SetCompatibilitySwitches(System.Collections.Generic.IEnumerable`1<System.String>)
+   at System.AppDomain.PrepareDataForSetup(System.String, System.AppDomainSetup, System.Security.Policy.Evidence, System.Security.Policy.Evidence, IntPtr, System.String, System.String[], System.String[])
+Aborted
+A：
+$ yum install icu
+
+
+
+8.
+this.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();                   // X-Forwarded-For 是格式为“初始请求ip, agent ip1, agent ip2, ...”
+this.HttpContext.Request.Headers["X-Original-For"]
+
+
+9.vs2017中的发布（bug）
+删除现有文件：必须改一次，且为true，才会生效，并不是勾中就会生效。    exe改变不会生效
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            return Task.CompletedTask;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+System.Text.Encodings.Web.HtmlEncoder.Default.Encode
+
+
+no
+HtmlEncoder.Default.Encode("代码改变世界")
+
+ok
+HtmlEncoder.Create(UnicodeRanges.All).Encode("代码改变世界")
+
+ok
+services.AddSingleton(HtmlEncoder.Create(UnicodeRanges.All));
+
+
+
+
+
+
+if (typeInfo.IsDefined(typeof(NonControllerAttribute)))
+{
+    return false;
+}
+
+
+
+
+AutoValidateAntiforgeryTokenAttribute
+IgnoreAntiforgeryToken
+ValidateAntiForgeryToken
+
+
+
+
+
+
+
+
+
+DOTNET_USE_POLLING_FILE_WATCHER
+
+
+
+
+
+https://github.com/AngleSharp/AngleSharp/wiki/Examples
+HtmlAgilityPack
+
+
+
+
+
+.Net Core 在 Linux 下连接 SqlServer 需要 SqlServer2008 SP3或以上版本，或SqlServer2012，或SqlServer2014.
+如果SqlServer2008低于SP3版本，会出现连接超时的问题。
+解决办法：
+官方下载SqlServer 2008 Sp3 补丁
+https://download.microsoft.com/download/9/6/4/964BB4EC-FC28-4DA7-9295-7D4A8FDBE1A4/CHS/SQLServer2008R2SP3-KB2979597-x64-CHS.exe
+下载补丁安装即可。
+
+
+
+
+
+
+
+
+
+
+
+.net core环境下，使用HttpClient执行GetStringAsync的时候，报了如下的错误：
+The character set provided in ContentType is invalid. Cannot read content as string using an invalid character set.
+1。添加 System.Text.Encoding.CodePages包
+2。在Main方法中调用如下代码：
+   EncodingProvider provider = CodePagesEncodingProvider.Instance;
+   Encoding.RegisterProvider(provider);
+
+
+
+
+System.ArgumentException:“'gbk' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method.”
+
+
+
+
+这边有个小坑，dy2018网页编码格式是GB2312,.NET Core默认不支持GB2312，使用Encoding.GetEncoding(“GB2312”)的时候会抛出异常。
+
+解决方案是手动安装System.Text.Encoding.CodePages包(Install-Package System.Text.Encoding.CodePages),
+
+
+https://github.com/PeterKottas/DotNetCore.WindowsService
+
+
+
+
+
+
+
+
+
+Failed to load , error: libunwind.so.8: cannot open shared object file: No such file or directory
+
+Failed to bind to CoreCLR at '/root/dotnet/shared/Microsoft.NETCore.App/2.0.0/libcoreclr.so'
+
+不怕，因为我们没有安装libunwind，只要安装下即可，执行以下命令：
+
+[root@localhost soft]# yum install libunwind
+
+
+
+
+FailFast: Couldn't find a valid ICU package installed on the system. Set the configuration flag System.Globalization.Invariant to true if you want to run with no globalization support.
+
+[root@localhost soft]# yum install icu
+
+
+
+
+https://www.cnblogs.com/wyt007/category/1130278.html

@@ -1,0 +1,3014 @@
+﻿
+
+※·•◆★●̑∵∴®¤≈……┌┐└┘∟「」⊥┼┤┴├┬↑↓→←↖↗↘↙♀♂≠╳√╱╲—│∞
+
+㊣①②③④⑤⑥⑦⑧⑨⑩
+
+爬虫相关
+·scrapy
+·lxml
+·requests
+·selenium
+Web 开发
+·Django
+·Flask
+·Bottle
+网络编程
+·Twisted
+·Tornado
+数据库
+·SQLAlchemy
+·peewee
+·pony
+·pymongo
+·redis
+机器学习
+·Scikit-learn
+·gensim
+·nltk
+深度学习
+·Tensorflow
+·Theano
+·Caffe
+科学计算/数据分析
+·numpy
+·Scipy
+·pandas
+·matplotlib
+·seaborn
+·statsmodels
+·sympy
+图像处理
+·scikit-image
+·Pillow
+·opencv
+运维相关
+·psutil
+·IPy
+·dnspython
+·rrdtool
+·playbook
+桌面应用
+·PyQt
+·wxPython
+·Pywin32
+游戏开发
+·Pygame
+·PySDL2
+
+
+http://c.biancheng.net/python/
+零.准备工作
+1.环境搭建
+
+
+一、安装部署
+A.安装python
+●安装包方式
+> curl https://www.python.org/ftp/python/3.7.3/python-3.7.3-amd64.exe
+
+
+●绿色包方式
+# 下载python
+> curl https://files.pythonhosted.org/packages/00/b6/9cfa56b4081ad13874b0c6f96af8ce16cfbc1cb06bedf8e9164ce5551ec1/pip-19.3.1-py2.py3-none-any.whl
+> curl https://files.pythonhosted.org/packages/ce/ea/9b445176a65ae4ba22dce1d93e4b5fe182f953df71a145f557cffaffc1bf/pip-19.3.1.tar.gz
+# embeddable 版本是将 python 运行所需要的库全部编译为 .pyc 文件，并且把一些常用的库压缩入一个 zip 文件里
+> curl https://www.python.org/ftp/python/3.7.5/python-3.7.5-embed-amd64.zip
+
+# 下载get-pip.py脚本：https://pip.pypa.io/en/stable/installing/
+> curl https://bootstrap.pypa.io/get-pip.py
+# 安装完成后，python主文件目录的“上一级目录”会多出Lib，Scripts两个目录
+> python get-pip.py
+# 安装测试
+> python -m pip --version 或 pip -v 或 pip --version
+
+
+
+
+●微软商店方式
+# 从微软商店中下载安装
+# 会安装在以下目录
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.7_3.7.1264.0_x64__qbz5n2kfra8p0
+# 并在以下目录建立快捷方式
+C:\Users\napple\AppData\Local\Microsoft\WindowsApps
+
+
+¤windows命令行输入python或python3会出现自动跳转微软商店，不运行自己安装的python的问题。
+原因是C:\Users\用户名\AppData\Local\Microsoft\WindowsApps文件夹下有python.exe和python3.exe等文件污染了环境变量。
+解决方法：使用powershell管理员模式rm命令删除这些python.exe文件。或者是在环境变量中删除这一路径。
+
+
+
+B.配置pycharm
+JAVA中叫JDK，PYTHON中叫“解释器”或“Interpreter”
+1.系统Interpreter（Project Interpreter）
+Configurations/ 自定义配置项 /Python interpreter
+
+2.虚拟环境virtualenv
+# 在该文件中定义了Python.exe所在位置，设置错误会出现类似“Error running 'xxx': Cannot run program "yyy\python.exe" (in directory "zzz"): CreateProcess error=2, 系统找不到指定的文件”的提示
+> vim venv/pyvenv.cfg
+home = D:\Program Files\Code\Lang\Python
+include-system-site-packages = false
+version = 3.7.4
+
+
+¤
+
+python pip-19.3.1-py2.py3-none-any.whl/pip install pip-19.3.1-py2.py3-none-any.whl
+
+
+
+C.环境配置
+·项目下的虚拟环境文件
+> vim venv/pyvenv.cfg
+home = D:\Program Files\Code\Lang\Python
+include-system-site-packages = false
+version = 3.7.4
+
+
+
+
+
+·设置与python关联的pip
+错误提示：Traceback (most recent call last):
+  File "D:\obj\windows-release\37amd64_Release\msi_python\zip_amd64\runpy.py", line 193, in _run_module_as_main
+  File "D:\obj\windows-release\37amd64_Release\msi_python\zip_amd64\runpy.py", line 85, in _run_code
+  File "D:\Program Files\Code\Lang\Python\Scripts\pip.exe\__main__.py", line 4, in <module>
+ModuleNotFoundError: No module named 'pip'
+
+经过观察，运行python get-pip.py后，python的安装目录多了文件夹Lib\site-packages，尝试将其中的pip目录复制到python的安装目录，再次运行pip命令，报错消失。
+撤销复制，修改python安装目录下的python3x._pth文件，新添加一行Lib\site-packages或.\Lib\site-packages。
+再次运行pip命令，一切正常，问题解决。
+？？？？？？？？？？？？？也可能是查找不到Script目录，将Script目录加入path即可
+
+
+
+·设置与pip关联的python
+错误提示（？？？？？？？？？？？？旧版）：Unable to create process using '".....\python.exe" ".....\pip.exe"'.
+
+
+错误提示（19.2.3）：failed to create process.
+修改pip-script.py路径
+> vim ./pip-script.py
+#!"D:\Program Files\Code\Lang\Python\python.exe"
+
+
+旧版pip把与其相关联的python.exe位置硬编码写在了pip.exe自身文件中，新版则是写在了与其同级目录的pip-script.py中
+
+
+
+
+
+
+
+·PYTHONPATH
+在用import导入项目文件夹里自己写的python文件时，常常说找不到该文件，这时可以将项目路径添加到PYTHONPATH下：
+（1）临时添加
+import sys
+sys.path.append(项目路径)
+
+（2）永久添加
+# 文件名任意定义
+> vim python36._pth
+D:\NutDisk\Program\Resource\Library\Python\Tedt
+python37.zip
+.\DLLs
+.\Lib
+.
+..
+.\Lib\site-packages
+.\lib\site-packages\pip-19.2.3-py3.7.egg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+D.执行python脚本文件
+在Linux/Unix系统中，你可以在脚本顶部添加以下命令让Python脚本可以像SHELL脚本一样可直接执行： 
+#! /usr/bin/env python3
+$ chmod +x hello.py
+$ ./hello.py
+
+
+
+
+
+
+E.
+1.源
+pip install -i http://pypi.douban.com/simple/flask  
+https://pypi.python.org/simple
+http://pypi.douban.com/simple/ 豆瓣
+http://mirrors.aliyun.com/pypi/simple/ 阿里
+http://pypi.hustunique.com/simple/ 华中理工大学
+http://pypi.sdutlinux.org/simple/ 山东理工大学
+http://pypi.mirrors.ustc.edu.cn/simple/ 中国科学技术大学
+https://pypi.tuna.tsinghua.edu.cn/simple 清华
+
+
+
+
+
+
+
+
+
+
+
+
+
+Q.常见问题
+
+
+1.
+q：
+-------------------------------------------------------------------------------
+pydev debugger: CRITICAL WARNING: This version of python seems to be incorrectly compiled (internal generated filenames are not absolute)
+pydev debugger: The debugger may still function, but it will work slower and may miss breakpoints.
+pydev debugger: Related bug: http://bugs.python.org/issue1666807
+-------------------------------------------------------------------------------
+pydev debugger: process 17324 is connecting
+
+Connected to pydev debugger (build 192.6603.34)
+pydev debugger: Unable to find real location for: D:\obj\windows-release\37amd64_Release\msi_python\zip_amd64\ntpath.py
+pydev debugger: Unable to find real location for: D:\obj\windows-release\37amd64_Release\msi_python\zip_amd64\genericpath.py
+
+分析：
+https://stackoverflow.com/questions/15825656/jython-remote-debugging-intellij-idea-using-pycharm-plugin
+
+Python程序运行时不需要编译成二进制代码，而直接从源码运行程序，简单来说是，Python解释器将源码转换为字节码，然后再由解释器来执行这些字节码。
+解释器的具体工作： 
+（1）完成模块的加载和链接； 
+（2）将源代码编译为PyCodeObject对象(即字节码)，写入内存中，供CPU读取； 
+（3）从内存中读取并执行，结束后将PyCodeObject写回硬盘当中，也就是复制到.pyc或.pyo文件中，以保存当前目录下所有脚本的字节码文件。
+
+之后若再次执行该脚本，它先检查【本地是否有上述字节码文件】和【该字节码文件的修改时间是否在其源文件之后】，是就直接执行，否则重复上述步骤。
+
+那有的小伙伴就有疑问了，__pycache__文件夹的意义何在呢？ 
+因为第一次执行代码的时候，Python解释器已经把编译的字节码放在__pycache__文件夹中，这样以后再次运行的话，如果被调用的模块未发生改变，那就直接跳过编译这一步，直接去__pycache__文件夹中去运行相关的 *.pyc 文件，大大缩短了项目运行前的准备时间。
+
+a：
+由于.pyc与实际不符，导致了以上问题，解决方式是删除.pyc文件，下次运行时会重新生成。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+一.基本知识点
+0.命名规范
+（1）文件名
+全小写，可使用下划线
+
+（2）包
+每个具有__init__.py文件的目录被称为包
+同模块
+
+（3）模块
+python中，每个py文件被称之为模块
+小写下划线分隔
+eg.
+import decoder
+import html_parser
+
+（4）类
+使用帕斯卡命名风格，私有类可用一个下划线_开头
+eg.
+class Farm():
+    pass
+
+class AnimalFarm(Farm):
+    pass
+
+class _PrivateFarm(Farm):
+    pass
+
+（5）函数
+小写下划线分隔，私有函数可用一个下划线_开头
+eg.
+def run():
+    pass
+
+def run_with_env():
+    pass
+
+class Person():
+    def _private_func():
+        pass
+
+（6）变量
+小写下划线分隔
+eg.
+if __name__ == '__main__':
+    count = 0
+    school_name = ''
+
+（7）常量
+大写下划线分隔
+eg.
+MAX_CLIENT = 100
+MAX_CONNECTION = 1000
+CONNECTION_TIMEOUT = 600
+
+
+（8）静态变量与动态变量
+class ClassName:
+    """docstring for ClassName"""
+    arg=0
+    def __init__(self, arg):
+        self.arg = arg
+
+obj = ClassName(2)
+print(obj.arg)
+print(ClassName.arg)
+
+
+
+
+1.基本语法
+a.格式
+·单行注释 #
+·多行注释 
+    '''
+    这是多行注释1
+    ''' 
+    或
+    """
+    这是多行注释2
+    """
+·可以空行，但空行也是代码的一部分
+·单引号与双引号等价
+·if或else的多条执行内容，缩进要相同
+·同一行多条语句，要用;分号隔开
+
+
+b.format
+（1）通过位置来填充字符串
+print 'hello {0} i am {1}'.format('Kevin','Tom')                                # hello Kevin i am Tom
+print 'hello {} i am {}'.format('Kevin','Tom')                                  # hello Kevin i am Tom
+print 'hello {0} i am {1} . my name is {0}'.format('Kevin','Tom')               # hello Kevin i am Tom . my name is Kevin
+
+
+（2）通过key来填充
+print 'hello {name1}  i am {name2}'.format(name1='Kevin',name2='Tom')           # hello Kevin i am Tom
+
+（3）通过下标填充
+names=['Kevin','Tom']
+'hello {names[0]}  i am {names[1]}'.format(names=names)                         # hello Kevin i am Tom
+'hello {0[0]}  i am {0[1]}'.format(names)                                       # hello Kevin i am Tom
+
+（4）通过字典的key
+names={'name':'Kevin','name2':'Tom'}
+'hello {names[name]}  i am {names[name2]}'.format(names=names)                  # hello Kevin i am Tom
+
+（5）通过对象的属性
+class Names():
+    name1='Kevin'
+    name2='Tom'
+'hello {names.name1}  i am {names.name2}'.format(names=Names)                   # hello Kevin i am Tom
+
+（6）使用魔法参数
+args=['lu']
+kwargs = {'name1': 'Kevin', 'name2': 'Tom'}
+'hello {name1} {} i am {name2}'.format(*args, **kwargs)  # hello Kevin i am Tom
+
+
+
+
+
+2.数据类型
+Python3 中有六个标准的数据类型： Number（数字）、String（字符串）、List（列表）、Tuple（元组）、Sets（集合）、Dictionary（字典）
+（1）Number（数字）：int、float、bool、complex（复数）
+¤int，表示为长整型，没有 python2 中的 Long。
+（2）字符串
+str = "abcdefg"
+print(str)           # 输出字符串
+print(str[0:-1])     # 输出第一个个到倒数第二个的所有字符
+print(str[0])        # 输出字符串第一个字符
+print(str[2:5])      # 输出从第三个开始到第五个的字符
+print(str[2:])       # 输出从第三个开始的后的所有字符
+print(str * 2)       # 输出字符串两次
+print(str + "TEST")  # 连接字符串
+print('Ru\noob')     # 转义
+print(r'Ru\noob')    # 不转义
+'python '.rstrip()   # 删除空白
+
+age = 23
+message = "Happy " + str(age) + "rd Birthday!"
+
+
+（3）进制转换
+bin = "100111"
+print("二进制转十进制：", int(bin, 2))
+
+z='F'
+x=int(z,16)  #将16进制字符串转换为int值
+
+
+dec = int(input("输入数字："))
+print("十进制数为：", dec)
+print("转换为二进制为：", bin(dec))
+print("转换为八进制为：", oct(dec))
+print("转换为十六进制为：", hex(dec))
+
+
+
+
+
+
+（3）列表
+list = [ 'abcd', 786 , 2.23, 'runoob', 70.2 ]
+list.append('xxxx')
+list.insert('xxxx')
+list.remove('xxxx')
+list[:]                             # ※浅克隆
+tail = list.pop()
+list.pop(1)                         # 弹出指定位置的元素
+del list[0]
+
+
+print(list[0])
+range(5)    生成0-5
+range(5,9)  生成5-9
+range(0, 10, 3) 生成0-10,增量为3
+min([1, 2, 3])
+max([1, 2, 3])
+
+zimu = ['a', 'b', 'c', 'd', 'e', 'f']
+print('a' in zimu)
+print(zimu + zimu)
+print(zimu * 2)
+
+
+
+## 两个list合并
+# 方式一
+>>> a = [1, 2, 3, 4, 5, 6]
+>>> b = ['a', 'b', 'c', 'd']
+>>> a+b
+# 方式二
+>>> a.extend(b)
+>>> print(a)
+result:
+[1, 2, 3, 4, 5, 6, 'a', 'b', 'c', 'd']
+# 方式三
+>>> a[0:0] = b
+>>> print(a)
+['a', 'b', 'c', 'd', 1, 2, 3, 4, 5, 6]
+# 方式四
+>>> a.append(b)
+>>> print(a)
+[1, 2, 3, 4, 5, 6, ['a', 'b', 'c', 'd']]
+
+
+
+# 去重
+lst = list(set(lst))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+（4）元组：与列表类似，不同之处在于元组的元素不能修改。元组写在小括号(())里
+tuple = ( 'abcd', 786 , 2.23, 'runoob', 70.2  )
+
+（5）集合：无序
+student = {'Tom', 'Jim', 'Mary', 'Tom', 'Jack', 'Rose'}
+if('Rose' in student) :
+    print('Rose 在集合中')
+
+（6）字典
+¤该类型是无序的
+contacts = {'bill' : '353-1234', 'rich' : 2, 'jane' : '352-1234'}
+contacts['barb'] = '271-12347'
+
+
+## 两个字典合并
+>>> a = {'a':1, 'b':2, 'c':3}
+>>> b = {'aa':11, 'bb':22, 'cc':33}
+# 方式一
+>>> dict(a, **b)
+# 方式二
+>>> dict(a.items() + b.items())
+# 方式三
+>>> c = {}
+>>> c.update(a)
+>>> c.update(b)
+>>> print(c)
+result：
+{'a': 1, 'aa': 11, 'c': 3, 'b': 2, 'bb': 2, 'cc': 33}
+
+
+（7）枚举
+# 方式一
+import enum.Enum
+
+ExtremumEnum = enum.Enum('ExtremumEnum', ('MIN', 'MAX'))
+# 方式二
+class ExtremumEnum(enum.Enum):
+    MIN = 0,
+    MAX = 1
+
+// 通过“值”获取“枚举”
+print(ExtremumEnum(0))
+// 通过“枚举”获取“值”
+print(ExtremumEnum['MIN'])
+
+
+（8）迭代器
+list=[1, 2, 3, 4]
+it = iter(list)    # 创建迭代器对象
+
+while True:
+    try:
+        print(next(it))
+    except StopIteration:
+        sys.exit()
+
+（9）类型判断及转换
+type(2)
+type("abc")
+int('7')                # 类型转换
+
+
+
+
+3.运算        
+print(a - b)            # a和b的差集
+print(a | b)            # a和b的并集
+print(a & b)            # a和b的交集
+print(a ^ b)            # a和b中不同时存在的元素
+math.pow(a, b)          # a ^ b
+
+
+del                     # 删除对象引用
+**                      # 乘方
+//                      # 除法，取整数结果
+/                       # 除法，浮点结果
+
+
+
+
+二、模块
+python中，每个py文件被称之为模块。
+每个模块有一个__name__对象，当一个模块为启动模块时，则有__name__ == '__main__'，否则__name__的值为当前模块名称。
+
+那我们在被调用的模块中，可执行的代码前加上这么一句判断，if __name__ == '__main__':，被调用的模块的代码就不会被执行了！
+
+
+
+
+
+
+三、类与函数
+1.函数定义
+class Foo(object):
+    # 构造函数
+    def __init__(self):
+        pass
+
+    # 类方法：不需要self对象参数，但需要cls类参数
+    @classmethod
+    def class_fly(cls):
+        pass
+    # 调用方式
+    # Foo.class_fly(null)                                         # 静态方式调用
+    # Foo().class_fly(null)                                       # 动态方式调用
+
+    # 静态方法：不需要self对象参数和cls类参数
+    @staticmethod
+    def static_fly():
+        pass
+    # 调用方式
+    # Foo.static_fly()
+
+    # 默认参数
+    def mutiply(self, x = 2):
+        return x * 8
+
+    # 关键字参数
+    def divide(self, a, b):
+        return a / b
+    num = divide(b=2, a=8)
+
+    # 可变参数1（*args）
+    # 此处的可变参数，应该传入的是元组才会视为多个参数（如果是非元组，即使是列表也会被视为单一参数）
+    def printit(self, *args):
+        print(args)
+
+    a_list = [1, 'python', 'helloworld', 'test']
+    # 正确：(1, 'python', 'helloworld', 'test')
+    self.print_it(*a_list)
+    # 错误：([1, 'python', 'helloworld', 'test'],)
+    self.print_it(a_list)
+    # 错误：([1, 'python', 'helloworld', 'test'],)
+    self.print_it([1, 'python', 'helloworld', 'test'])
+
+    a_tuple = (2, 'python', 'helloworld', 'test')
+    # 正确：(2, 'python', 'helloworld', 'test')
+    self.print_it(*a_tuple)
+    # 错误：((2, 'python', 'helloworld', 'test'),)
+    self.print_it(a_tuple)
+    # 正确：(2, 'python', 'helloworld', 'test')
+    self.print_it(2, 'python', 'helloworld', 'test')
+
+
+
+    # 可变参数2（**kwargs）
+    # 此处的可变参数，应该传入的是字典才会视为多个参数
+    def printit(self, **kwargs):
+        print(kwargs)
+    printit(k1=123, k2="456")
+    result:
+    {'k1': 123, 'k2': '456'}
+
+    # 可变参数3
+    def printit(self, p, *args, **kwargs):
+        print(p)
+        print(args)
+        print(kwargs)
+    printit(11, "abc", [789], k1=123, k2="456")
+    result:
+    11
+    ('abc', [789])
+    {'k1': 123, 'k2': '456'}
+
+    # 可变参数4
+    def printit(self, *args):
+        print(args)
+    li = [11, 22, 33, 44]                   # 集合也视为一个参数
+    printit(li)
+    printit(*li)
+    result:
+    ([11, 22, 33, 44],)
+    (11, 22, 33, 44)
+
+    # 可变参数5
+    def printit(self, **kwargs):
+        print(kwargs)
+    li = {"k1": 1, "k2": 2}
+    printit(k=li)
+    printit(**li)
+    result:
+    {'k': {'k2': 2, 'k1': 1}}
+    {'k2': 2, 'k1': 1}
+
+    # 匿名函数（通过lambda）
+    sum = lambda arg1, arg2: arg1 + arg2;
+    result = sum(1, 2)
+    result = (lambda arg1, arg2: arg1 + arg2)(1, 2)
+
+    # 
+    
+    z = x if x > y else y
+
+
+
+2.函数的传递
+# 函数作为参数
+def map(data, fn):
+    return fn(data)
+
+def square(n) :
+    return n * n
+
+n = map(2, square)
+
+# 函数作为返回值
+def choose():
+    def square(n):
+        return n * n
+    return square
+fn = choose()
+n = fn(2)
+
+
+
+
+3.lambda表达式
+3.1 lambda 表达式定义
+def sum_fun1(a, b):
+    return a + b
+
+sum1 = fum_fun1(1, 2)
+sum2 = lambda a, b: a + b
+
+
+
+3.2 闭包
+# 例一
+def sum(a):
+    def add(b):
+        return a + b
+    return add
+
+sum(1)(2)
+
+
+# 例二
+def counter():
+    num = 0
+    def increase():
+        num += 1
+        return num
+    return increase
+
+counter()()         # 1
+counter()()         # 2
+
+3.3 一些内建函数对lambda的应用
+li = [1, 2, 3, 4, 5]
+# 序列中的每个元素加1
+map(lambda x: x+1, li)                      # [2, 3, 4, 5, 6]，返回Iterator类型
+
+# 返回序列中的偶数
+filter(lambda x: x % 2 == 0, li)            # [2, 4]
+
+# 返回所有元素相乘的结果
+reduce(lambda x, y: x * y, li)              # 1*2*3*4*5 = 120
+
+# 排序
+sorted(data, key=lambda d: d['sort_time'], reverse=True)
+
+
+
+4.局部变量的作用域
+（1）global与local
+# 默认情况下，在 module 中，非class中的函数，优先访问局部变量，而非全局变量。除非使用global
+# global 用在module中的函数中，表示引入一个全局变量，如：
+age = 0
+def nextT():
+    print(locals())                 # {'age': 20}
+    print(locals()['age'])          # 20
+    
+    globals()['age']
+
+    global age                      # 不加会报错
+    age += 1
+    return age
+
+
+5.属性property
+class Animal(object):
+    def __init__(self, name):
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if isinstance(value, basestring):
+            self._name = value
+        else:
+            self._name = 'No name'
+
+animal = Animal('black dog')
+animal.name = 'white dog'
+
+
+
+
+isinstance(hello, str)
+isinstance(hello, object)
+issubclass(str, tuple)
+
+
+
+
+
+6.内建函数
+# filter
+(month, day) = (2, 15)
+days = ((1, 20), (2, 19), (3, 21), (4, 21), (5, 21), (6, 22), (12, 23))
+days = filter(lambda x: x<= (month, day), days)
+print(list(days))
+
+reduce
+type(list)
+isinstance('aaa', object)
+
+
+（1）IO
+------------------------------------------------
+# 以只读方式打开文件
+file = open('/tmp/foo.txt')
+# 以可写方式打开文件
+file = open('/tmp/foo.txt', 'w')
+# 以追加方式打开文件
+file = open('/tmp/foo.txt', 'a')
+file.write('hello')
+
+import os
+dir_root = os.path.abspath(".")
+dir_rules = os.path.join(dir_root, "rules")
+
+# 
+print(file.tell())
+file.seek()
+
+print(file.read(3))
+print(file.readlines())
+for line in file.readlines():
+  print(line)
+  print('===')
+
+file.close()
+------------------------------------------------
+
+
+
+（2）控制台
+# 输出
+print("Hello, World!");
+print('%s %d' % ("a", 2))
+# 不转义
+print(r'\n 1111 \n')
+符号       描述
+ %c    格式化字符及其ASCII码 
+ %s    格式化字符串 
+ %d    格式化整数 
+ %u    格式化无符号整型 
+ %o    格式化无符号八进制数 
+ %x    格式化无符号十六进制数 
+ %X    格式化无符号十六进制数（大写） 
+ %f    格式化浮点数字，可指定小数点后的精度 
+ %e    用科学计数法格式化浮点数 
+ %E    作用同%e，用科学计数法格式化浮点数 
+ %g    %f和%e的简写 
+ %G    %f 和 %E 的简写 
+ %p    用十六进制数格式化变量的地址 
+
+
+B.输入
+num = input('Enter a number:')
+
+C.repr()
+
+（3）拷贝
+>>> c = copy.copy(a)        # 浅拷贝
+>>> d = copy.deepcopy(a)    # 深拷贝
+
+
+
+（4）时间格式化
+------------------------------------------------
+import time
+time.time()
+time.localtime()
+time.strftime('%Y-%m-%d %H:%M:%S')
+------------------------------------------------
+
+（5）当前时间
+------------------------------------------------
+import datetime
+datetime.datetime.now()
+------------------------------------------------
+
+
+（6）随机
+------------------------------------------------
+import random
+random.random()                                 # 随机返回一个[0,1)范围内的实数
+random.randint(1, 5)                            # Return random integer in range [a, b], including both end points.
+random.choice(['aa'], ['bb'], ['cc'])
+------------------------------------------------
+
+
+（7）路径连接
+------------------------------------------------
+import os
+os.path.abspath('..')
+os.path.exist('')
+os.path.isdir('')
+os.path.join('/a/b', 'c/d')
+------------------------------------------------
+
+
+（8）路径获取
+------------------------------------------------
+import pathlib
+p = pathlib('.')
+p.resolve()
+p.is_dir()
+------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+三.基本语法
+1.条件、循环
+●if
+if x<0 and True:
+    print("abc")
+    print("abc")                        # 缩进要一致
+elif not z.isdigit():
+    print("def")
+else:
+    print("def")
+
+# 三元表达式
+res='aaaaa' if x > y else 'bbbbbbb'
+
+●while
+while x<10:
+    print(x)
+    x+=1
+
+while True:
+     pass                                   # 不做任何事，等待键盘中断 (Ctrl+C)
+
+
+●for
+for val in ['A', 'B']:
+    print(val)
+    continue
+    break
+
+for i, val in enumerate(list):
+    print ("序号：%s   值：%s" % (i + 1, val))
+
+# for中删除，while类似
+for (String str : list) {
+    if ("aaa".equals(str)) {
+        list.remove("aaa");
+    }
+}
+
+res=[itm for itm in lst if itm > 50]        # 过滤
+res=[i**2 for i in l]                       # 设置初始值
+
+
+2.except
+try:
+    f = open('myfile.txt')
+    s = f.readline()
+    i = int(s.strip())
+    # 自定义异常
+    raise NameError('helloError')
+    finally:
+        print('Goodbye, world!')
+except OSError as err:
+    print("OS error: {0}".format(err))
+# 捕获多条异常
+except ValueError, AttributeError, ZeroDivisionError as e:
+    print("Could not convert data to an integer.")
+except:
+    print("Unexpected error:", sys.exc_info()[0])
+except NameError:
+  print('捕获自定义异常')
+else:
+    f.close()
+finally:
+    print('Goodbye, world!')
+★使用 else 子句比把所有的语句都放在 try 子句里面要好，这样可以避免一些意想不到的、而except又没有捕获的异常。异常处理并不仅仅处理那些直接发生在try子句中的异常，而且还能处理子句中调用的函数（甚至间接调用的函数）里抛出的异常。
+
+
+
+3.with
+关键词 with 语句就可以保证诸如文件之类的对象在使用完之后，会被关闭
+with open("myfile.txt") as stream:
+    for line in stream:
+        print(line, end="")
+
+
+
+
+4.上下文管理器
+class Test(obj):
+    def __enter__(self):
+        print "In __enter__()"
+              return "test_with"
+
+    def __exit__(self, type, value, trace):
+        print "In __exit__()"
+
+with Test() as example:
+    print "example:", example
+
+
+
+
+
+
+四.高级功能
+# 装饰器
+def timmer(func):
+  def wrapper():
+    start_time = time.time()
+    func()
+    end_time = time.time()
+    print("运行时间是 %s 秒" % (end_time - start_time))
+  return wrapper
+
+@timmer
+def mysleep():
+  timer.sleep(3)
+
+
+# 同timmer(mysleep())
+mysleep()
+
+
+
+
+def outter(arg)
+    def middle(func):
+        def inner(a, b):
+            print('start %s %s', %(arg, func.__name__))
+            func(a, b)
+            print('end')
+        return inner
+    return middle
+
+@outter('add')
+def add(a, b):
+    print(a + b)
+
+@outter('sub')
+def sub(a, b):
+    print(a - b)
+
+sum = add(4, 5)
+
+
+
+
+
+
+
+
+
+
+
+六.模块
+·用import导入模块
+---------------------------------
+#!/usr/bin/python3
+# Filename: test.py
+ 
+# 导入模块
+import support
+ 
+# 现在可以调用模块里包含的函数了
+support.print_func("Runoob")
+---------------------------------
+
+·用from配合import导入模块
+import sound.effects.echo
+调用：sound.effects.echo.echofilter(input, output, delay=0.7, atten=4)
+
+from sound.effects import echo
+调用：echo.echofilter(input, output, delay=0.7, atten=4)
+
+from sound.effects.echo import echofilter
+调用：echofilter(input, output, delay=0.7, atten=4)
+
+import matplotlib.pyplot as plt
+调用：plt.axvline(x=x, ymin=0, ymax=10); plt.subplot(2, 1, 1);
+
+★from是调用时“可省略”的部分，import是调用时“要书写”的部分
+
+·动态导入模块
+
+└─pkg
+│  ├─order.py
+│  └─pay.py
+└─test.py
+
+# __import__ 方式
+module = __import__('pkg.order')
+module.order.test()
+
+# importlib 方式
+import importlib
+module = importlib.import_module('pkg.order')
+module = importlib.import_module('.order', package='pkg')
+module.test()
+
+
+
+
+
+每个模块都有一个__name__属性，当其值是'__main__'时，表明该模块自身在运行，否则是被引入。
+
+
+import sys
+dir(sys)
+
+obj = XXX()
+type(obj)
+
+
+
+
+
+
+
+
+make_pizza.py
+def make_pizza(size, *toppings):
+    """概述要制作的比萨"""
+    print("\nMaking a " + str(size) +
+          "-inch pizza with the following toppings:")
+    for topping in toppings:
+        print("- " + topping)
+
+
+from pizza import make_pizza
+make_pizza(16, 'pepperoni')
+make_pizza(12, 'mushrooms', 'green peppers', 'extra cheese')
+
+
+
+
+
+
+
+
+
+
+
+14.多线程
+import threading
+
+# 方式一
+t = threading.Thread(target = myfunc, args = ('arg1', 'arg2', 'arg3'))
+t.start()
+
+# 方式二
+class MyThread(threading.Thread):
+    def run(self):
+        print(current_thread().getName(), 'start')
+        print(current_thread().getName(), 'end')
+t = MyThread()
+t.start()
+t.join()
+
+15.队列
+q = queue.Queue(5)
+q.put(1)
+item = q.get()
+
+
+16.正则
+r = re.complie('a.*1')
+# 完全匹配
+r1 = r.match('b')
+r2 = r.match('b').groups()
+# 搜索
+r3 = r.search('b')
+r3 = r.search('b').groups()
+
+
+10.面向对象
+（1）类
+class Book(Paper1, Paper2):      # 继承
+    # 私有类型、私有方法，名称开头要加__，不能在外部调用
+    __private_num=1
+
+    def __getNum():
+        return self.__private_num
+
+    # 无参构造方法
+    def __init__(self):
+        self.data = []
+
+    # 有参构造方法
+    def __init__(self, name, auth):
+        Paper1.__init__(self, name, auth)               # 调用父类的构造方法，经典类写法
+        self.name = name
+        self.auth = auth
+
+    # 类方法，与一般函数定义不同，类方法必须包含参数self，且为第一个参数
+    def do(self):
+        print("")
+
+    # 私有方法
+    def __do(self):
+        print("")
+
+    # 析构方法
+    def __del__(self):
+        ...
+    return ...
+
+
+book = Book("name", "auth")
+book.do()
+
+
+
+
+1. 经典类的写法：父类名称.__init__(self, 参数1, 参数2, ...)
+class Book(Reader, Paper):
+    def __init__(self, name):
+      Reader.__init__(self, name)
+      Paper.__init__(self, name)
+
+    def do(self):
+      Reader.do(self)
+      Paper.do(self)
+      print('do...')
+
+2. 新式类的写法：super(子类, self).__init__(参数1, 参数2, ....)
+# python是多继承，故应指定继承顺序。（python3后继承顺序是先广度，后深度）
+class Book(Reader, Paper):
+    def __init__(self, name):
+      super(Book, self).__init__(name)          # 即调用Reader的构造函数        同super().__init__(name);
+      super(Reader, self).__init__(name)        # 即调用Paper的构造函数
+
+    def do(self, name):                         # 类中的函数要带参数self
+      super(Book, self).do(name)                # 即调用Reader的do方法          同super().do(name);
+      super(Reader, self).do(name)              # 即调用Paper的do方法                              
+
+不要一说到 super 就想到父类！super 指的是 MRO 中的上一个（广度或深度）类！
+不要一说到 super 就想到父类！super 指的是 MRO 中的上一个（广度或深度）类！
+不要一说到 super 就想到父类！super 指的是 MRO 中的上一个（广度或深度）类！
+MRO=方法解析顺序(method resolution order)
+
+※继承顺序
+·经典类多继承搜索顺序(深度优先)
+·先深入继承树左侧查找，然后再返回，开始查找右侧
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import readline 
+import rlcompleter 
+import atexit 
+import os 
+# tab autocomplete 
+readline.parse_and_bind('tab: complete') 
+# history file 
+histfile = os.path.join(os.environ['HOME'], '.pythonhistory') 
+try: 
+readline.read_history_file(histfile) 
+except IOError: 
+pass
+atexit.register(readline.write_history_file, histfile) 
+del os, histfile, readline, rlcompleter
+
+export PYTHONSTARTUP=/home/yurii/.pythonstartup 
+
+
+
+
+
+
+
+import pylab
+listOfInts = []
+for counter in range(10):
+    listOfInts.append(counter*2)
+    
+print listOfInts
+print len(listOfInts)
+
+pylab.plot(listOfInts)
+pylab.show()
+
+
+
+
+
+
+●pip
+·安装
+# 下载
+$ https://pypi.python.org/pypi/pip#downloads
+# 解压安装
+$ tar -zxvf https://files.pythonhosted.org/packages/00/9e/4c83a0950d8bdec0b4ca72afd2f9cea92d08eb7c1a768363f2ea458d08b4/pip-19.2.3.tar.gz
+$ cd pip-19.2.3
+$ python setup.py install
+
+
+
+
+·使用
+$ tar -zxvf xxx.tar.gz;cd xxx;python setup.py install;                  # 离线安装.tar.gz包
+$ pip install xxx                                                       # 在线安装
+$ python3 -m pip install xxx
+$ pip install xxx.whl                                                   # 安装.whl包
+$ pip install --upgrade xxx                                             # 在线升级
+$ pip uninstall xxx                                                     # 卸载
+$ python -m pip uninstall pip                                           # 卸载PIP的命令
+$ easy_inatall pip                                                      # 重装PIP的命令
+$ python -m pip install --upgrade pip                                   # 升级PIP的命令
+
+$ pip search xxx
+$ pip show xxx
+$ pip show -f xxx
+$ pip list
+$ pip list -o
+$ pip uninstall xxx.whl
+
+
+
+
+
+$ pip install matplotlib -i http://pypi.douban.com/simple --trusted-host pypi.douban.com
+$ pip install numpy -i http://pypi.douban.com/simple --trusted-host pypi.douban.com
+$ pip install pandas -i http://pypi.douban.com/simple --trusted-host pypi.douban.com
+$ pip install seaborn scipy  -i http://pypi.douban.com/simple --trusted-host pypi.douban.com
+$ pip install tensorflow
+$ pip install sklearn
+$ pip install --upgrade https://download.tensorflow.google.cn/mac/cpu/tensorflow-1.8.0-py3-none-any.whl
+$ pip install --upgrade pip
+
+
+
+Microsoft Visual C++ 14.0 is required.
+
+
+
+下载whl
+https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-ldap
+
+
+
+
+
+
+
+
+
+
+
+
+算法
+
+Top N
+
+neighborhood-based算法就像我们找同学给我们推荐资料。就是先帮我们找到兴趣相似的人，然后把这些人喜欢的东西推荐给我们。因为 只分析用户对用户的关系或者物品对物品的关系，所以运算非常快。
+
+Model-based算法是指对 用户行为矩阵 进行矩阵分解 再 用模型来学习 已有的用户物品隐变量，用学习到的 低rank的用户矩阵、物品矩阵 相乘 来预测结果，典型算法有SVD, SVD++, ALS算法。因为采用了模型的方法预测了完整的用户物品矩阵，推荐的效果相对neighborhood-based较好。但是由于算法需要训练，运算时间大幅上涨。
+
+
+You are using pip version 18.1, however version 19.0.3 is available.
+You should consider upgrading via the 'python -m pip install --upgrade pip' command.
+$ python -m pip install --upgrade pip
+
+
+
+
+
+
+
+
+
+
+
+
+十、数据分析
+https://www.numpy.org.cn/
+A.介绍
+Numpy: 基础的数学计算模块，以矩阵为主，纯数学。
+Pandas: 提供了一套名为DataFrame的数据结构，适合统计分析中的表结构，在上层做数据分析。
+SciPy: 基于Numpy，提供方法(函数库)直接计算结果，封装了一些高阶抽象和物理模型。比方说做个傅立叶变换，这是纯数学的，用Numpy；做个滤波器，这属于信号处理模型了，在Scipy里找。
+
+更简洁的说:
+NumPy：N维数组容器
+Pandas：表格容器DataFrame
+SciPy：科学计算函数库
+
+
+
+
+
+B.使用
+a.matplotlib（绘图库）
+0.pyplot
+import matplotlib.pyplot as plt
+
+
+
+# 画板
+# 在绘图结构中，figure创建窗口，subplot创建子图。所有的绘画只能在子图上进行。plt表示当前子图，若没有就创建一个子图。所有你会看到一些教程中使用plt进行设置，一些教程使用子图属性进行设置。他们往往存在对应功能函数。
+
+Figure：面板(图)，matplotlib中的所有图像都是位于figure对象中，一个图像只能有一个figure对象。
+Subplot：子图，figure对象下创建一个或多个subplot对象(即axes)用于绘制图像。
+
+def do(self):
+    # 子图（分成2行1列，取第1个）
+    plt.subplot(2, 1, 1)
+    plt.axvline(x=20, ymin=0, ymax=10)
+    # 子图（分成2行1列，取第2个）
+    plt.subplot(2, 1, 2)
+    plt.axvline(x=2, ymin=0, ymax=10)
+    # 显示
+    plt.show()
+
+def do(self):
+    # 图一
+    plt.figure(1)
+    plt.axvline(x=1, ymin=0, ymax=10)
+    # 图二
+    plt.figure(2)
+    plt.axvline(x=2, ymin=0, ymax=10)
+    # 显示
+    plt.show()
+
+
+# 此外，Figure类提供用于清除数字的方法。我将在下面假设fig是Figure:
+fig = plt.figure()
+ax = fig.add_subplot(2, 1, 1)
+plt.ion()
+line1 = ax.plot(x, y)
+line2 = ax.plot(x + 1, y + 1)
+line1.remove()
+fig.clf()                                                               # 清除整个数字这个电话相当于plt.clf()只有当fig是目前的数字。
+fig.clear()                                                             # 同义词fig.clf()
+
+plt.cla()                                                               # 清除axes，即当前 figure 中的活动的axes，但其他axes保持不变。
+plt.clf()                                                               # 清除当前 figure 的所有axes，但是不关闭这个 window，所以能继续复用于其他的 plot。
+
+    """
+    python可视化库matplotlib有两种显示模式，在Python Consol命令行中，默认是交互模式。而在python脚本中，matplotlib默认是阻塞模式：
+    ·阻塞（block）模式
+    打开一个窗口以后必须关掉才能打开下一个新的窗口。这种情况下，默认是不能像Matlab一样同时开很多窗口进行对比的。
+    plt.plot(x)或plt.imshow(x)是直接出图像，需要plt.show()后才能显示图像
+    ·交互（interactive）模式
+    plt.plot(x)或plt.imshow(x)是直接出图像，不需要plt.show()
+    如果在脚本中使用ion()命令开启了交互模式，没有使用ioff()关闭的话，则图像会一闪而过，并不会常留。要想防止这种情况，需要在plt.show()之前加上ioff()命令。    
+    """
+plt.ioff()
+plt.show()
+plt.close()                                                             # 关闭 window，如果没有指定，则指当前 window。
+plt.close('all')                                                        # 关闭所有 window
+fig = plt.gcf()                                                         # 获取当前 figure
+plt.close(fig)                                                          # 关闭传入的 figure 对象
+
+plt.xlim                                                                # 设置x轴刻度的取值范围
+plt.ylim                                                                # 设置y轴刻度的取值范围
+plt.axvline(x=0, ymin=0, ymax=1, hold=None, **kwargs)                   # 绘制一条垂直线
+plt.axhline(y=0, xmin=0, xmax=1, hold=None, **kwargs)                   # 绘制一条水平线
+
+plt.figure(num=None, figsize=None, dpi=None, facecolor=None, edgecolor=None, frameon=True)
+num：图像编号或名称，数字为编号 ，字符串为名称
+figsize：指定figure的宽和高，单位为英寸；
+dpi：参数指定绘图对象的分辨率，即每英寸多少个像素，缺省值为80      1英寸等于2.5cm,A4纸是 21*30cm的纸张 
+facecolor：背景颜色
+edgecolor：边框颜色
+frameon：是否显示边框
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 散点图（scatter）
+------------------------------------------------------------------------------
+scatter(x, y, s=None, c=None, marker=None, cmap=None, norm=None, vmin=None, vmax=None, alpha=None, linewidths=None, verts=None, edgecolors=None, hold=None, data=None, **kwargs)
+    x，y：array_like，shape（n，）
+        输入数据
+    
+    s：标量或array_like，shape（n，），可选
+        大小以点数^ 2。默认是`rcParams ['lines.markersize'] ** 2`。
+    
+    c：颜色，顺序或颜色顺序，可选，默认：'b'
+        `c`可以是单个颜色格式的字符串，也可以是一系列颜色
+        规范的长度为`N`，或一系列`N`数字
+        使用通过kwargs指定的`cmap`和`norm`映射到颜色
+        （见下文）。请注意，`c`不应该是单个数字RGB或
+        RGBA序列，因为这与数组无法区分
+        值将被彩色映射。 `c`可以是一个二维数组，其中的
+        行是RGB或RGBA，但是，包括单个的情况
+        行为所有点指定相同的颜色。
+    
+    marker：`〜matplotlib.markers.MarkerStyle`，可选，默认值：'o'
+        请参阅`〜matplotlib.markers`以获取有关不同的更多信息
+        标记分散支持的样式。 `marker`可以是
+        该类的实例或特定文本的简写
+        标记。
+    
+    cmap：`〜matplotlib.colors.Colormap`，可选，默认：无
+        一个`〜matplotlib.colors.Colormap`实例或注册名称。
+        `cmap`仅在`c`是浮点数组时使用。如果没有，
+        默认为rc`image.cmap`。
+    
+    norm：`〜matplotlib.colors.Normalize`，可选，默认：无
+        `〜matplotlib.colors.Normalize`实例用于缩放
+        亮度数据为0,1。`norm`只有在`c`是一个数组时才被使用
+        彩车。如果`None'，则使用默认值：func：`normalize`。
+    
+    vmin，vmax：标量，可选，默认值：无
+        `vmin`和`vmax`与`norm`结合使用来标准化
+        亮度数据。如果其中任何一个都是`无'，那么最小和最大的
+        使用颜色数组。请注意，如果你通过一个“规范”实例，你的
+        `vmin`和`vmax`的设置将被忽略。
+    
+    alpha：标量，可选，默认值：无
+        alpha混合值，介于0（透明）和1（不透明）之间，
+    
+    linewidths：标量或array_like，可选，默认值：无
+        如果无，则默认为（lines.linewidth，）。
+    
+    verts：（x，y）的序列，可选
+        如果`marker`为None，这些顶点将用于
+        构建标记。标记的中心位于
+        在（0,0）为标准化单位。整体标记重新调整
+        由``s``完成。
+    
+     edgecolors ：颜色或颜色顺序，可选，默认值：无
+        如果无，则默认为'face'
+    
+        如果'face'，边缘颜色将永远是相同的
+        脸色。
+    
+        如果它是'none'，补丁边界不会
+        被画下来。
+    
+        对于未填充的标记，“edgecolors”kwarg
+        被忽视并被迫在内部“面对”。
+------------------------------------------------------------------------------
+x = [600, 150, 200, 300, 200, 100, 125, 180]
+y = [60, 65, 73, 70, 65, 58, 66, 67]
+plt.scatter(x, y, s = 30)                       # s 表示点的尺寸
+plt.show()
+
+
+
+
+
+
+
+
+# 使用Series作为坐标轴，以风速数据（wind）作为x轴，烧毁面积（area）作为y轴，做出它们的散点图
+# ※※※每调用一次，前一次的不会被清除，而是会叠加，所以多了会越来越慢。优化方案是可以用line.set_data(x_data, y_data)重写数据
+plt.scatter(forest_fires["wind"], forest_fires["area"])
+plt.show()
+
+# 折线图（plot）
+x_data = ['2013', '2014', '2015', '2016', '2017', '2018', '2019']
+y_data = [58000, 60200, 63000, 71000, 84000, 90500, 107000]
+y_data2 = [52000, 54200, 51500,58300, 56800, 59500, 62700]
+# 一组数据
+plt.plot(x_data, y_data)
+# 两组数据
+plt.plot(x_data, y_data, x_data, y_data2)
+plt.plot(x_data, y_data, color = 'red', linewidth = 2.0, linestyle = '--')
+plt.show()
+
+# 条形图#################3
+
+
+# 直方图（默认是自动分成10等分的，且生成的图中是有网格线的，现在要分成20等分，同时消除网格线）
+df.hist('column1', bins=20, grid=False)
+
+
+
+b.numpy（矩阵操作库）
+https://www.numpy.org.cn/article/basics/understanding_numpy.html
+https://www.numpy.org.cn/
+
+NumPy是一个功能强大的Python库，主要用于对多维数组执行计算。NumPy这个词来源于两个单词-- Numerical和Python。NumPy提供了大量的库函数和操作，可以帮助程序员轻松地进行数值计算。这类数值计算广泛用于以下任务：
+·机器学习模型：在编写机器学习算法时，需要对矩阵进行各种数值计算。例如矩阵乘法、换位、加法等。NumPy提供了一个非常好的库，用于简单(在编写代码方面)和快速(在速度方面)计算。NumPy数组用于存储训练数据和机器学习模型的参数。
+·图像处理和计算机图形学：计算机中的图像表示为多维数字数组。NumPy成为同样情况下最自然的选择。实际上，NumPy提供了一些优秀的库函数来快速处理图像。例如，镜像图像、按特定角度旋转图像等。
+·数学任务：NumPy对于执行各种数学任务非常有用，如数值积分、微分、内插、外推等。因此，当涉及到数学任务时，它形成了一种基于Python的MATLAB的快速替代。
+
+★辨析
+NumPy 数组在创建时具有固定的大小，与Python的原生数组对象（可以动态增长）不同。更改ndarray的大小将创建一个新数组并删除原来的数组。
+NumPy 数组中的元素都需要具有相同的数据类型，因此在内存中的大小相同。 例外情况：Python的原生数组里包含了NumPy的对象的时候，这种情况下就允许不同大小元素的数组。
+NumPy 数组有助于对大量数据进行高级数学和其他类型的操作。通常，这些操作的执行效率更高，比使用Python原生数组的代码更少。
+越来越多的基于Python的科学和数学软件包使用NumPy数组; 虽然这些工具通常都支持Python的原生数组作为参数，但它们在处理之前会还是会将输入的数组转换为NumPy的数组，而且也通常输出为NumPy数组。换句话说，为了高效地使用当今科学/数学基于Python的工具（大部分的科学计算工具），你只知道如何使用Python的原生数组类型是不够的 - 还需要知道如何使用 NumPy 数组。
+
+
+
+★语法
+ndarray数组的索引 切片（Slicing）
+访问一维数据/切片对象  slice(start,stop,step)
+[:]                         所有元素
+[: -1]                      去除最后一个元素
+[1 : ]                      索引>=1的元素
+[ : 3]                      索引<=3的元素
+[-2 : ]                     >=倒数第2个
+[1::2]                      >=1开始，以2为步长取到结束
+[::-1]                      所有元素倒序
+访问二维
+[:,1]                       所有行，第一列
+[:,:2]                      所有行，列步长2
+访问三维
+[2,1,2] =[2][1][2]          第三层第二行第三列
+[0,:,:]                     第一层所有
+[0,1,::2]                   第一层第二行列步长2
+[::-1]                      所有层数倒序
+--------------------- 
+
+
+
+
+
+
+
+
+★实例
+import numpy as np
+
+·一维数组
+# 一维数组
+datas = np.array([0, 1, 2, 3, 4])
+运行结果：
+[0, 1, 2, 3, 4]
+
+datas = np.arange(5)
+datas = np.arange(1, 5)
+datas = np.arange(1, 5, 2)
+运行结果：
+[0, 1, 2, 3, 4]
+[1, 2, 3, 4]
+[1, 3]
+
+# 只有numpy.ndarray类型才支持这种写法
+datas = datas[datas % 2 == 0]
+运行结果：
+[0, 2, 4]
+
+# 生成一维随机
+datas = np.random.randint(0, 100, size = 10)
+运行结果：
+[32 49 54 49 16 79 74  4 20 31]
+
+# 生成一维重复
+datas = np.repeat(True, 10)
+运行结果：
+[True, True, True, True, True, True, True, True, True, True]
+
+
+
+·二维数组
+# 通过随机数生成
+datas = np.random.randn(2, 4)
+运行结果：
+[[ 0.53906009  0.13518413  0.77751591  0.45161506]
+ [ 0.69508664  0.92827505  0.7525167   0.97254505]]
+
+# 通过随机数生成（可指定取值范围）
+datas = np.random.uniform(-1, 1, (2, 4))
+运行结果：
+[[ 0.53906009 -0.13518413 -0.77751591 -0.45161506]
+ [-0.69508664 -0.92827505  0.7525167   0.97254505]]
+
+# 通过重复生成多维
+datas = np.full((3, 3), True, dtype=bool)
+运行结果：
+array([[ True,  True,  True],
+       [ True,  True,  True],
+       [ True,  True,  True]], dtype=bool)
+
+# 通过一维生成
+datas = np.arange(6).reshape(2, 3)
+## 获取极值位置
+shape = datas.shape
+loc = np.argmin(datas)
+num = np.min(datas)
+运行结果：
+array([[0, 1, 2],
+       [3, 4, 5]])
+(2, 3)
+0
+0
+
+# 生成二维数组
+datas = np.array([[1,  2],  [3,  4]])
+运行结果：
+[[1, 2]
+ [3, 4]]
+
+# 生成二维数组
+datas = np.array([1, 2, 3, 4, 5], ndmin = 2)
+运行结果：
+[[1, 2, 3, 4, 5]]
+
+# 二维数组相关参数
+datas = np.arange(24)
+print(type(datas))
+print(datas.dtype)
+print(datas.size)
+print(datas.shape)
+print(datas.itemsize)
+print(datas.ndim)
+运行结果：
+ndarray
+int64
+24
+(6, 4)
+8
+2
+
+np.array([[1,2,3],[4,5,6]])
+运行结果：
+(2, 3)
+
+
+
+# 一维数组
+>>> import numpy as np 
+>>> a = np.arange(24)
+>>> a.ndim 
+# 现在调整其大小
+>>> b = a.reshape(2,4,3)  
+>>> print(b)
+# b 现在拥有三个维度
+运行结果：
+[[[ 0,  1,  2]
+  [ 3,  4,  5]
+  [ 6,  7,  8]
+  [ 9, 10, 11]]
+
+  [[12, 13, 14]
+   [15, 16, 17]
+   [18, 19, 20]
+   [21, 22, 23]]]
+
+
+
+
+
+
+b.sum(axis=0) 等同与  b[0,:,:] + b[1,:,:]
+b.sum(axis=1) 等同与  b[:,0,:] + b[:,1,:] + b[:,2,:]
+b.sum(axis=2) 等同与  b[:,:,0] + b[:,:,1] + b[:,:,2] + b[:,:,3]
+
+
+
+
+# numpy的计算
+
+# 求和
+>>> np.sum([[0, 1], [0, 5]])
+6
+# 求和
+>>> np.sum([0.5, 0.7, 0.2, 1.5], dtype=np.int32)
+1
+# 压缩行，即按列求和
+>>> np.sum([[0, 1], [0, 5]], axis=0)
+array([0, 6])
+# 压缩列，即按行求和
+>>> np.sum([[0, 1], [0, 5]], axis=1)
+array([1, 5])
+# 平方
+>>> np.square(3)
+9
+
+
+>>> x = np.array([[1, 2], [3, 4]])
+
+>>> n = 2
+>>> y = x + n
+[[3, 4]
+ [5, 6]]
+>>> y = x * n
+[[2, 4]
+ [6, 8]]
+
+>>> n = np.array([[5, 7]])
+>>> y = x + n
+[[ 6,  9]
+ [ 8, 11]]
+>>> y = x * n
+[[ 5, 14]
+ [15, 28]]
+
+>>> n = np.array([[5], [7]])
+>>> y = x + n
+[[ 6,  7]
+ [10, 11]]
+>>> y = x * n
+[[ 5, 10]
+ [21, 28]]
+
+>>> n = np.array([[5, 7], [11, 13]])
+>>> y = x + n
+[[ 6,  9]
+ [14, 17]]
+>>> y = x * n
+[[ 5, 14]
+ [33, 52]]
+
+-----------------------------------------------------------
+
+>>> arr1 = np.array([[1,2,3], [4,5,6]])
+>>> arr2 = np.array([[6,5], [4,3], [2,1]])
+
+# 查看arr维度
+>>> print(arr1.shape)                                   # (2, 3)
+
+# 切片 
+>>> np.array([1,2,3,4,5,6])[:3]                         # array([1,2,3])
+>>> arr1[0:2,0:2]                                       # 二维切片
+
+# 乘法
+>>> np.array([1,2,3]) * np.array([2,3,4])               # 对应元素相乘 array([2, 6, 12])
+>>> arr1.dot(b)                                         # 矩阵乘法
+
+# 矩阵求和
+>>> np.sum(arr1)                                        # 所有元素之和 21
+>>> np.sum(arr1, axis=0)                                # 列求和 array([5, 7, 9])
+>>> np.sum(arr1, axis=1)                                # 行求和 array([6, 15])
+
+# 最大最小
+>>> np.max(arr1, axis=0/1)
+>>> np.min(a, axis=0/1)
+-----------------------------------------------------------
+
+
+# 二维数组切片实例
+>>> datas = np.random.randn(6, 4)
+>>> print(datas)
+>>> print('---------------------------------------------------')
+>>> print(datas[0])
+>>> print('---------------------------------------------------')
+>>> print(datas[:, 0])
+运行结果：
+[[ 1.87694016  0.38732324  1.27549777 -0.28369365]
+ [ 0.10147257 -0.86016789  0.42572197  0.3542069 ]
+ [ 1.41369606  1.94953824  0.1503083   0.38457907]
+ [ 0.11104507  0.19474235  0.92452603 -1.24164846]
+ [-1.02365165  1.57136244 -1.3023228  -0.76538138]
+ [-0.38742124 -0.74943603  1.59223499  0.19508854]]
+---------------------------------------------------
+[ 1.87694016  0.38732324  1.27549777 -0.28369365]
+---------------------------------------------------
+[ 1.87694016  0.10147257  1.41369606  0.11104507  -1.02365165  -0.38742124]
+
+
+
+
+# 转置
+>>> A = np.array([[2, 1, 3]])
+[2][1][3]
+>>> B = np.array([[2], [1], [3]])
+[2]
+[1]
+[3]
+>>> C = np.transpose(np.array([[2, 1, 3]]))
+[2]
+[1]
+[3]
+>>> D = np.array([[2, 1, 3]]).T
+[2]
+[1]
+[3]
+
+# A x = b
+x = np.linalg.solve(A, b)
+
+
+
+# 重新组织
+>>> datas = np.array([[1,2,3],[4,5,6]])
+>>> datas.shape = (3, 2)
+# 或者
+>>> datas = reshape(3, 2)
+运行结果：
+[[1, 2] 
+ [3, 4] 
+ [5, 6]]
+
+
+
+
+# 垂直叠加
+>>> a = np.arange(10).reshape(2,-1)
+[[0 1 2 3 4]
+ [5 6 7 8 9]]
+>>> b = np.repeat(1, 10).reshape(2,-1)
+[[1 1 1 1 1]
+ [1 1 1 1 1]]
+
+# Answers
+# Method 1:
+>>> np.concatenate([a, b], axis=0)
+
+# Method 2:
+>>> np.vstack([a, b])
+
+# > array([[0, 1, 2, 3, 4],
+# >        [5, 6, 7, 8, 9],
+# >        [1, 1, 1, 1, 1],
+# >        [1, 1, 1, 1, 1]])
+
+
+
+
+>>> a = np.array([[1, 2], [3, 4]])
+>>> b = np.array([[5, 6]])
+>>> np.concatenate((a, b), axis=0)
+array([[1, 2],
+       [3, 4],
+       [5, 6]])
+
+np.concatenate((a, b.T), axis=1)
+array([[1, 2, 5],
+       [3, 4, 6]])
+
+
+
+
+
+
+
+
+# 水平叠加
+a = np.arange(10).reshape(2,-1)
+b = np.repeat(1, 10).reshape(2,-1)
+# Answers
+# Method 1:
+np.concatenate([a, b], axis=1)
+
+# Method 2:
+np.hstack([a, b])
+
+# > array([[0, 1, 2, 3, 4, 1, 1, 1, 1, 1],
+# >        [5, 6, 7, 8, 9, 1, 1, 1, 1, 1]])
+
+
+# 选取公共项
+a = np.array([1,2,3,2,3,4,3,4,5,6])
+b = np.array([7,2,10,2,7,4,9,4,9,8])
+np.intersect1d(a,b)
+# > array([2, 4])
+
+
+
+从一个数组中删除存在于另一个数组中的项
+a = np.array([1,2,3,4,5])
+b = np.array([5,6,7,8,9])
+# From 'a' remove all of 'b'
+np.setdiff1d(a,b)
+# > array([1, 2, 3, 4])
+
+
+
+# 得到两个数组元素匹配的位置
+a = np.array([1,2,3,2,3,4,3,4,5,6])
+b = np.array([7,2,10,2,7,4,9,4,9,8])
+np.where(a == b)
+# > (array([1, 3, 5, 7]),)
+
+
+
+# 从numpy数组中提取给定范围内的所有数字
+a = np.arange(15)
+
+# Method 1
+index = np.where((a >= 5) & (a <= 10))
+a[index]
+
+# Method 2:
+index = np.where(np.logical_and(a>=5, a<=10))
+a[index]
+# > (array([6, 9, 10]),)
+
+# Method 3: (thanks loganzk!)
+a[(a >= 5) & (a <= 10)]
+
+
+
+
+
+
+# 平均值、中位数、标准差
+mu, med, sd = np.mean(sepallength), np.median(sepallength), np.std(sepallength)
+
+
+np.max：对一个序列操作，返回一个序列的最值；
+np.argmax：对一个序列操作，返回一个序列最大值对应的索引；
+np.maximum：对两个序列操作，返回两个序列对应位置比较后的最值。
+np.greater：对两个序列操作，返回两个序列对应位置比较后的布尔值。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+c.pandas（基于DataFrame的数据结构库）
+http://pandas.pydata.org/pandas-docs/stable/getting_started/10min.html#min
+1.Series
+# 利用实数
+s1 = pd.Series(3, index=list("a"))
+# 利用列表
+s2 = pd.Series(list("abcdfgdhsdafcv"))
+# 利用元组
+s3 = pd.Series(tuple("sdfacdfgd"))
+# 利用数组
+s4 = pd.Series(list([1, 2, 3, 4, 5, 6, 7, 8, 9]))
+# 利用字典
+s5 = pd.Series({"name": "nick", "age": 12, "sex": "male"})
+
+# 空处理
+series.dropna()
+series.fillna(value=0)                      # 或series.fillna(0)
+series.fillna(value=0, inplace=True)        # 修改自己本身
+
+
+# 相加
+s1 = pd.Series([1, 2, 3, 4], index=['a', 'b', 'c', 'd'])
+s2 = pd.Series([10, 20, 30, 40], index=['c', 'd', 'e', 'f'])
+s3 = s1.add(s2, fill_value=0)
+print(s3)
+# 结果:
+a     1.0
+b     2.0
+c    13.0
+d    24.0
+e    30.0
+f    40.0
+dtype: float64
+
+
+2.DataFrame
+# 创建DataFrame（通过列表）
+df = pd.DataFrame(data)
+df = pd.DataFrame([data, index, columns, dtype, copy])
+
+
+# 创建DataFrame（通过列表）
+data = {'city': ['beijing', 'shanghai', 'guangzhou', 'shenzhen'],
+        'year': [2018, 2017, 2018, 2016],
+        'pop': [1.1, 1.2, 1.3, 1.4]}
+df = DataFrame(data)
+print(df)
+运行结果：
+        city        pop     year
+0    beijing        1.1     2018
+1   shanghai        1.2     2017
+2  guangzhou        1.3     2018
+3   shenzhen        1.4     2016
+
+
+# 创建DataFrame（通过字典，指定索引）
+data = {'city': {0: 'beijing', 1: 'shanghai', 2: 'guangzhou', 3: 'shenzhen'},
+        'pop': {0: 1.1, 1: 1.2, 2: 1.3, 3: 1.4},
+        'year': {0: 2018, 1: 2017, 2: 2018, 3: 2016}
+        }
+df = pd.DataFrame(data, columns= ['year', 'city', 'pop'])
+print(df)
+print(df)
+运行结果：
+        city        pop     year
+0    beijing        1.1     2018
+1   shanghai        1.2     2017
+2  guangzhou        1.3     2018
+3   shenzhen        1.4     2016
+
+
+
+
+# 创建DataFrame（通过列表）
+d_data = {'A':1, 'B':pd.Timestamp('20170220'), 'C':range(4), 'D':np.arange(4)}
+print(d_data)                               # {'A': 1, 'B': Timestamp('2017-02-20 00:00:00'), 'C': range(0, 4), 'D': array([0, 1, 2, 3])}
+df_data = pd.DataFrame(d_data)
+print(df_data)
+运行结果：
+   A          B  C  D
+0  1 2017-02-20  0  0
+1  1 2017-02-20  1  1
+2  1 2017-02-20  2  2
+3  1 2017-02-20  3  3
+
+
+
+
+
+
+3.创建DataFrame（通过csv）
+df = pd.read_csv('xxx.csv')
+# 指定“列分隔符”、“列标题所在行”
+df = pd.read_csv('xxx.csv', sep=',', header=0)
+# 重命名“列标题”
+df = pd.read_csv('ratings.csv', sep=',', header=0, names=['user_id', 'movie_id', 'rating', 'titmestamp'])
+# 写入
+df.to_csv('E:\\demo.csv', encoding='utf-8', index=False) 
+
+
+4.创建DataFrame（通过函数）
+# （1）创建索引列表
+indexes = pd.date_range('20170220', periods=6)
+print(indexes)
+运行结果：
+['2017-02-20', '2017-02-21', '2017-02-22', '2017-02-23', '2017-02-24', '2017-02-25']
+
+# （2）创建列列表
+columns = list('ABCD')
+print(columns)
+运行结果：
+['A', 'B', 'C', 'D']
+
+# （3）创建数据列表
+datas = np.random.randn(6, 4)
+print(type(datas))
+print(datas)
+运行结果：
+ndarray
+[[ 1.87694016  0.38732324  1.27549777 -0.28369365]
+ [ 0.10147257 -0.86016789  0.42572197  0.3542069 ]
+ [ 1.41369606  1.94953824  0.1503083   0.38457907]
+ [ 0.11104507  0.19474235  0.92452603 -1.24164846]
+ [-1.02365165  1.57136244 -1.3023228  -0.76538138]
+ [-0.38742124 -0.74943603  1.59223499  0.19508854]]
+
+# 创建DataFrame
+df = pd.DataFrame(data = datas, index = indexes, columns = list('ABCD'))
+print(df)
+运行结果：
+                   A         B         C         D
+2017-02-20 -1.087685 -1.116796  0.755212 -0.845874
+2017-02-21 -0.214008 -1.136115 -0.717218  0.509644
+2017-02-22  2.097830 -0.074577  1.554416 -0.275385
+2017-02-23 -1.764693  0.010108  0.743128 -0.647702
+2017-02-24 -0.471733 -1.536996 -0.351987  2.585145
+2017-02-25  0.751181 -2.094402  0.075476  1.740280
+
+# 返回形状
+print(df.shape)
+运行结果：
+(6, 4)
+
+# 返回值
+print(df.values)
+运行结果：
+[[ 1.87694016  0.38732324  1.27549777 -0.28369365]
+ [ 0.10147257 -0.86016789  0.42572197  0.3542069 ]
+ [ 1.41369606  1.94953824  0.1503083   0.38457907]
+ [ 0.11104507  0.19474235  0.92452603 -1.24164846]
+ [-1.02365165  1.57136244 -1.3023228  -0.76538138]
+ [-0.38742124 -0.74943603  1.59223499  0.19508854]]
+
+# 返回各列数据类型
+print(df.dtypes)
+运行结果：
+A           float
+B           int64
+C           object
+D           ...
+
+# 返回头几行（默认5行）
+print(df.head())
+print(df.head(3))
+
+# 返回后几行（默认5行）
+print(df.tail(3))
+
+# 返回索引名称
+print(df.index)
+
+# 返回列名
+print(df.columns)
+
+# 返回前三行
+print(df[0:3])
+
+# 返回'20130102'到'20130104'行
+print(df['20130102':'20130104'])
+
+# 返回索引行
+print(df.loc['2017-02-20'])
+
+# 返回列
+print(df.iloc['A'])
+print(df['A'])
+print(df.A)
+
+# 返回第四至第四行，及其前两列
+print(df.iloc[3:5, 0:2])
+
+# 返回第[1, 2, 4]行，及其[0, 2]列
+print(df.iloc[[1, 2, 4], [0, 2])
+
+# 返回前三行，及其'A', 'B'列
+print(df.loc[0:3, ['A', 'B']])
+
+# 行列式转置
+frame = df.T
+
+# 描述
+df.describe()
+运行结果：
+              A         B         C         D
+count  6.000000  6.000000  6.000000  6.000000
+mean  -0.023105  0.553495 -0.149472 -0.055555
+std    0.974716  0.549470  1.123968  0.943841
+min   -1.070849 -0.157387 -2.028773 -1.776675
+25%   -0.716772  0.091442 -0.339088 -0.273429
+50%   -0.144305  0.720336 -0.265810  0.219477
+75%    0.360702  0.953400  0.572925  0.495454
+max    1.599387  1.124788  1.174572  0.854677
+
+# 空处理
+df.dropna(how='all')
+df.dropna(axis=1, how='all')
+df.fillna(value=0)
+df.fillna(value=0, inplace=True)
+
+# 复制
+df2=df.copy()
+
+# 求和（如果是字符串，也会进行拼接）
+# 行求和
+df.sum(axis=1)
+# 列求和
+df.sum()        # 或df.sum(axis=0)
+运行结果：
+A    1.356150
+B   -0.510733
+C    1.834445
+D   -0.095579
+dtype: float64
+
+df.sum(1)
+运行结果：
+A    1.356150
+dtype: float64
+
+# 每一行的值，为之前行的累加和
+df.cumsum()
+
+
+
+# apply
+df = DataFrame(np.random.randn(4, 5), columns=['A', 'B', 'C', 'D', 'E'])
+结果：
+          A         B         C         D         E
+0  0.673092  0.230338 -0.171681  0.312303 -0.184813
+1 -0.504482 -0.344286 -0.050845 -0.811277 -0.298181
+2  0.542788  0.207708  0.651379 -0.656214  0.507595
+3 -0.249410  0.131549 -2.198480 -0.437407  1.628228
+
+
+df['Col_sum'] = df.apply(lambda x: x.sum(), axis=1)
+df.loc['Row_sum'] = df.apply(lambda x: x.sum())
+结果：
+                A         B         C         D         E   Col_sum
+0        0.673092  0.230338 -0.171681  0.312303 -0.184813  0.859238
+1       -0.504482 -0.344286 -0.050845 -0.811277 -0.298181 -2.009071
+2        0.542788  0.207708  0.651379 -0.656214  0.507595  1.253256
+3       -0.249410  0.131549 -2.198480 -0.437407  1.628228 -1.125520
+Row_sum  0.461987  0.225310 -1.769627 -1.592595  1.652828 -1.022097
+
+
+
+
+
+
+
+
+
+# 分组
+# 按A分组，对B求平均数
+df.groupby('A')['B'].mean()
+df.groupby('A')['B'].mean().sort_values(ascending=False)
+# 按A分组，对B求次数
+df.groupby('A')['B'].count()
+
+# 数乘运算
+df2=df.apply(lambda x:x*2)
+print(df2)
+运行结果：
+                   A         B         C         D
+2017-02-20  1.397035 -0.931457  0.027760 -0.053578
+2017-02-21 -0.565632  0.662350  0.811126  0.990393
+2017-02-22  0.095849  0.955284 -0.466965  0.039027
+2017-02-23  1.022370 -0.364719  1.505116 -2.358384
+2017-02-24  1.031475  0.754188  0.056759  0.271783
+2017-02-25 -1.742247 -0.044318 -1.077340 -0.666538
+                   A         B         C         D
+2017-02-20  2.794070 -1.862914  0.055520 -0.107157
+2017-02-21 -1.131263  1.324699  1.622252  1.980786
+2017-02-22  0.191698  1.910568 -0.933929  0.078054
+2017-02-23  2.044739 -0.729437  3.010231 -4.716768
+2017-02-24  2.062950  1.508377  0.113519  0.543566
+2017-02-25 -3.484494 -0.088636 -2.154679 -1.333075
+
+
+# 乘方运算
+df2=df**2        # 即7^=49
+print(df2)
+
+# 扩充列
+# 默认扩充位置
+df['E']=[1, 2, 3, 4, 5, 6]
+print(df)
+运行结果：
+                   A         B         C         D         E
+2017-02-20  1.397035 -0.931457  0.027760 -0.053578         1
+2017-02-21 -0.565632  0.662350  0.811126  0.990393         2
+2017-02-22  0.095849  0.955284 -0.466965  0.039027         3
+2017-02-23  1.022370 -0.364719  1.505116 -2.358384         4
+2017-02-24  1.031475  0.754188  0.056759  0.271783         5
+2017-02-25 -1.742247 -0.044318 -1.077340 -0.666538         6
+
+# 指定扩充位置
+df.insert(0, 'F', [1, 2, 3, 4, 5, 6])
+print(df)
+运行结果：
+                   F         A         B         C         D         E
+2017-02-20         1  1.397035 -0.931457  0.027760 -0.053578         1
+2017-02-21         2 -0.565632  0.662350  0.811126  0.990393         2
+2017-02-22         3  0.095849  0.955284 -0.466965  0.039027         3
+2017-02-23         4  1.022370 -0.364719  1.505116 -2.358384         4
+2017-02-24         5  1.031475  0.754188  0.056759  0.271783         5
+2017-02-25         6 -1.742247 -0.044318 -1.077340 -0.666538         6
+
+addedDataFrame = pands.DataFrame(['Book1', 'Book2', 'Book3', 'Book4', 'Book5', 'Book6'], index=['2017-02-20', '2017-02-21', '2017-02-22', '2017-02-23', '2017-02-27', '2017-02-28'], columns=list('G'))
+# 默认使用左连接
+df=df.join(addedDataFrame)
+print(df)
+运行结果：
+                   F         A         B         C         D         E         G
+2017-02-20         1  1.397035 -0.931457  0.027760 -0.053578         1      Book1
+2017-02-21         2 -0.565632  0.662350  0.811126  0.990393         2         2
+2017-02-22         3  0.095849  0.955284 -0.466965  0.039027         3         3
+2017-02-23         4  1.022370 -0.364719  1.505116 -2.358384         4         4
+2017-02-24         5  1.031475  0.754188  0.056759  0.271783         5       NaN
+2017-02-25         6 -1.742247 -0.044318 -1.077340 -0.666538         6       NaN
+
+
+# 透视表
+pd.pivot_table(frame, values='columnTemperature', index='city', columns='date')
+pd.pivot_table(frame, values='columnTemperature', columns='date', aggfunc=np.mean)
+
+
+
+
+# 排序
+import pandas as pd
+import numpy as np
+#以下实现排序功能。
+series = pd.Series([3, 4, 1, 6], index=['b', 'a', 'd', 'c'])
+frame = pd.DataFrame([[2, 4, 1, 5], [3, 1, 4, 5], [5, 1, 4, 2]], columns=['b', 'a', 'd', 'c'], index=['one', 'two', 'three'])
+print frame
+print series
+print 'series通过索引进行排序：'
+print series.sort_index()
+print 'series通过值进行排序:'
+print series.sort_values()
+print 'dataframe根据行索引进行降序排序（排序时默认升序，调节ascending参数）：'
+print df.sort_index(ascending=False)
+print 'dataframe根据列索引进行排序：'
+print df.sort_index(axis=1)
+print 'dataframe根据值进行排序：'
+print df.sort_values(by='a')
+print '通过多个索引进行排序：'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+（计算平均值）
+数学期望的由来：
+早些时候，法国有两个大数学家，一个叫做布莱士·帕斯卡，一个叫做费马。
+帕斯卡认识两个赌徒，这两个赌徒向他提出了一个问题。他们说，他俩下赌金之后，约定谁先赢满5局，谁就获得全部赌金。赌了半天，A赢了4局，B赢了3局，时间很晚了，他们都不想再赌下去了。那么，这个钱应该怎么分?
+是不是把钱分成7份，赢了4局的就拿4份，赢了3局的就拿3份呢?或者，因为最早说的是满5局，而谁也没达到，所以就一人分一半呢?这两种分法都不对。正确的答案是:赢了4局的拿这个钱的3/4，赢了3局的拿这个钱的1/4。
+为什么呢?假定他们俩再赌一局，A有1/2的可能赢得他的第5局，B有1/2的可能赢得他的第4局。若是A赢满了5局，钱应该全归他;若B赢得他的第4局，则下一局中A、B赢得他们各自的第5局的可能性都是1/2。所以，如果必须赢满5局的话，A赢得所有钱的可能为1/2+1/2×1/2=3/4,当然，B就应该得1/4。
+数学期望由此而来。
+
+
+
+
+
+比如双色球的期望值，是固定支出-2×100%+一等奖的奖金×一等奖中奖概率+二等奖的奖金×二等奖中奖概率+.......+六等奖的5元×6.2%的中奖概率。
+
+
+
+
+pycharm
+打开文件夹目录中的pyvenv文件
+将文件中的include-system-site-packages 修改为true
+
+http://www.lfd.uci.edu/~gohlke/pythonlibs/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import urllib.request
+import urllib.parse
+
+header = {
+    'Connection': 'close'
+}
+data = bytes(urllib.parse.urlencode({'key1': 'value1'}), encoding='utf8')
+response = urllib.request.urlopen("http://www.baidu.com", timeout=1, header=header, data=data)
+print(response.read().decode('utf8'))
+
+
+
+
+import requests
+
+reponse = requests.get("http://www.baidu.com", {'key1': 'value1'})
+print(response.text)
+print(response.json())
+
+
+
+https://www.deeplearningbook.org/
+http://pandas.pydata.org/pandas-docs/stable/getting_started/10min.html#min
+
+https://blog.csdn.net/zhurui_idea/article/details/56012622
+https://blog.csdn.net/u014525494/article/details/80157402
+https://www.jianshu.com/p/a435421e6c8e
+https://blog.csdn.net/lushuangning/article/details/79951568
+https://www.cnblogs.com/zzhzhao/p/5269217.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import pandas as pd
+import MySQLdb
+mysql_cn= MySQLdb.connect(host='localhost', port=3306,user='myusername', passwd='mypassword', db='mydb')
+df = pd.read_sql('select * from test;', con=mysql_cn)    
+mysql_cn.close()
+
+
+
+
+df = pd.read_excel('E:\\tips.xls')
+
+
+
+df.to_csv('E:\\demo.csv', encoding='utf-8', index=False) 
+
+
+
+
+
+
+
+
+
+
+https://blog.csdn.net/jiangjunshow/article/details/77338485
+http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.corrwith.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+九十九、常见问题
+1.'int' object is not callable
+今天码代码出现了一个错误：
+'int' object is not callable
+查资料，发现原因：当出现报错 XXX is not callable的时候，很有可能是你正在调用一个不能被调用的变量或对象，具体表现就是你调用函数、变量的方式错误。
+举例：
+if len(a) == len(b):#最终出现'int' object is not callable的错误
+#说明在前面定义了一个len 同名的变量 如 len = len("hallo Jun")
+
+sorted() 结合lambda对列表进行排序
+sorted 用于列表的排序,比列表自带的更加智能 有两个列表,每个列表中都有一个字典([{},{}])要求将两个这样的列表合并后按照时间排序, 两个列表中的时间为了能够通过json输出已经由时间格式转变为字符串格式.字段名为 sort_time 现在将他们按照倒序排列
+sorted 的用法
+sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list terable：是可迭代类型; cmp：用于比较的函数，比较什么由key决定,有默认值，迭代集合中的一项; key：用列表元素的某个属性和函数进行作为关键字，有默认值，迭代集合中的一项; reverse：排序规则. reverse = True 或者 reverse = False，有默认值。 * 返回值：是一个经过排序的可迭代类型，与iterable一样。
+sorted()结合lambda对可迭代类型用sort_time排序
+
+
+
+2.Method may be 'static'.
+将方法改造成@staticmethod形式
+
+
+3.
+q：
+  {TypeError}: 'int' object is not callable
+a：
+  变量与方法重名
+
+
+
+
+
+
+https://blog.csdn.net/u012422446/article/details/68061932
+https://blog.csdn.net/czrzchao/article/details/52314455
+https://my.oschina.net/u/1412321/blog/192454
+https://www.cnblogs.com/chamie/p/4552066.html
+https://www.cnblogs.com/21207-iHome/p/6013894.html
+https://www.jianshu.com/p/ae5157c26af9
+https://blog.csdn.net/u010451580/article/details/51178225
+https://www.cnblogs.com/chaihy/p/7243143.html
+https://c.m.163.com/news/a/EBAHLLKT05313S8B.html?spss=newsapp
+
+
+
+
+https://blog.csdn.net/winycg/article/details/79120154
+https://www.cnblogs.com/biaoyu/p/4857896.html
+
+http://c.biancheng.net/view/2261.html
+
+
+
+
+
+
+
+
+
+《编写高质量代码：改善Python程序的91个建议》读后感
+编写高质量代码：改善Python程序的91个建议  http://book.douban.com/subject/25910544/
+1.（建议16）is 用于判断两个对象的id是否相等，==才是判断值是否相等
+2.（建议23）for，while，和try语句后面都可以跟else语句，可以简化代码
+3.（建议18） __init__.py模块可以写代码，import时只需要 import 包（文件夹）
+4.（建议19）用import a 而不是 from a import b ,可以避免嵌套导入导致的报错
+尽量不要用 import *
+5.finally语句中加入return,或者break会屏蔽跳出的异常，所以finally里面不要用return和break
+7.（建议32）默认参数的默认值不要用不要设置为可变对象，如列表，字典等
+8.（建议30）列表解析可以多重循环,
+list1=list2=[1,2,3]
+print [ (a,b) for a in list1 for b in list2 if a==1]
+9.（建议30）（1）代表字符串 （1，）才是元祖
+10 .（建议36）字符串操作
+partition方法，
+src='abcdefg'
+print src.partition('de') #('abc', 'de', 'fg')
+split()可以不要参数，
+11.（建议39） defaultdict 
+from collections import defaultdict
+dict1=defaultdict(list)
+dict1['a'].append('b')
+不会报错
+
+12.（建议39）数量统计用Counter模块
+from collections import Counter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+__init__.py 文件的作用是将文件夹变为一个Python模块，Python 中的每个模块的包中，都有__init__.py 文件。它可以什么也不定义，只是一个空文件，但是必须存在。如果 __init__.py 不存在，这个目录就仅仅是一个目录，而不是一个包，它就不能被导入或者包含其它的模块和嵌套包。
+通常__init__.py 文件为空，但是我们还可以为它增加其他的功能。我们在导入一个包时，实际上是导入了它的__init__.py文件。
+这样我们可以在__init__.py文件中批量导入我们所需要的模块，而不再需要一个一个的导入。
+作用：
+1、Python包的标识符。python包实际上就是一个文件夹，__init__.py的作用就是把这个文件夹变成一个可识别的python包。如果没有__init__.py文件，则该文件夹只是一个普通的目录。
+2. 定义python包中的__all__，用于模糊导入
+
+
+
+
+
+
+
+
+
+matplotlib的默认backend是TkAgg，而FltkAgg, GTK, GTKAgg, GTKCairo, TkAgg , Wx or WxAgg这几个backend都要求有GUI图形界面的。
+
+import matplotlib.pyplot as plt
+Backend TkAgg is interactive backend. Turning interactive mode on.
+
+plt.get_backend()
+Out[3]: u'TkAgg'
+解决方法：指定不需要GUI的backend（Agg, Cairo, PS, PDF or SVG）
+
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import pandas as pd
+ 
+list = [98,88,37,68,86,33]
+ 
+df = pd.DataFrame(list, columns=['score'])
+ 
+df['level'] = '' # add a column
+ 
+def judgeLevel(df):
+    if df['score'] < 60:
+        return 'C'
+    elif df['score'] > 90:
+        return 'A'
+    else:
+        return 'B'
+ 
+df['level'] = df.apply(lambda r: judgeLevel(r), axis=1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+python xxx.py
+python -m xxx.py
+这是两种加载py文件的方式:
+1叫做直接运行
+2相当于import,叫做当做模块来启动
+
+-m mod : run library module as a script (terminates option list)
+
+
+
+那python和python -m的区别是什么呢。
+主要影响的是sys.path这个值，直接启动是把run.py文件，所在的目录放到了sys.path属性中。
+模块启动是把你输入命令的目录（也就是当前路径），放到了sys.path属性中，所以要使用相对路径的兄弟们就要注意了啊。
+
+
+
+
+
+原生模块 pymysql
+使用SQLAlchemy
+pip install peewee
+
+
+
+
+# yaml_format = yaml.safe_dump(json_serialize(group), default=lambda o: o.__dict__, default_flow_style=False)
+
+
+Playhouse
+from playhouse.shortcuts import model_to_dict, dict_to_model
+
+
+
+& | in
+Python关系运算符包括：==、！=、<>、<、>、<=、>=，返回布尔值True/False
+python逻辑运算符包括：and、or、not
+
+
+
+{ x for x in s if x % 3 == 0}
+
+
+def handle_wait(wait):
+    return '0' if not wait == None else str(wait)
+
+
+
+import re
+count = 0
+for i in dic:
+    for j in dic[i]:
+        if re.search(r'snRNA', j):
+            count += 1
+            print j
+print count
+
+
+
+
+
+
+
+is	is 是判断两个标识符是不是引用自一个对象
+is not	is not 是判断两个标识符是不是引用自不同对象
+
+#-*- coding:utf-8 -*- python 3.6.2
+a=1
+b=1
+lista=[1,'5','s','cf']
+listb=[1,'5','s','cf']
+
+if a is b:
+    print('a=b')
+if listb is lista:
+    print('lista is listb')
+if lista == listb:
+    print('lista=listb')
+结果：
+a=b
+lista=listb
+
+
+is 与 == 区别：
+is 用于判断两个变量引用对象是否为同一个， == 用于判断引用变量的值是否相等。
+
+
+
+
+https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
+
+
+
+
+os.path.dirname()
+os.path.realpath()
+
+
+isinstance (a,(str,int,list)) # 是元组中的一个返回 True
+pyyaml模块在python中用于处理yaml格式数据，主要使用yaml.safe_dump()、yaml.safe_load()函数将python值和yaml格式数据相互转换。当然也存在yaml.dump()、yaml.load()函数，同样能实现数据转换功能，只是官方不太推荐使用。官方给出的解释，因为yaml.safe_dump()、yaml.safe_load() 能够：
+
+
+Resolve only basic YAML tags. This is known to be safe for untrusted input.
+
+
+
+如果想对一个yaml文件中的多块yaml数据进行转换操作，则可以使用yaml.safe_dump_all()、yaml.safe_load_all()函数。下面会说明yaml.safe_dump()、yaml.safe_load()、yaml.safe_dump_all()、yaml.safe_load_all()函数的用法。
+
+
+
+>>> info = ["xiaowu","say","hello","world"]
+>>> "--".join(info)
+'xiaowu--say--hello--world'
+
+
+.startswith('a')
+.endswith('a')
+.swapcase()       大小写反转
+.capitalize()    首字母大写
+
+
+.isdigit()
+.isalpha()
+.isalnum()
+
+  tkinter其实是Python调用tcl程序的标准Python程序，可以通过这个interface调用tcl的程序，因为在大多数的unix系统中都内置了很多的tcl程序和命令。
+  Tcl 是“工具控制语言（Tool Command Language）”的缩写，其面向对象为otcl语言。Tk 是 Tcl“图形工具箱”的扩展，它提供各种标准的 GUI 接口项，以利于迅速进行高级应用程序开发。
+
+#去除字符串左右两边的空格
+>>> name.strip()
+'little-five'
+
+
+
+type() 不会认为子类是一种父类类型，不考虑继承关系。
+isinstance() 会认为子类是一种父类类型，考虑继承关系。
+
+
+
+
+
+
+
+random.random()
+np.random.uniform(low=0, high=1)
+
+
+
+
+data = [randint(-10, 10) for i in range(1, 11)]
+print(data)     #[5, 7, 9, 3, -6, -7, -8, -9, 3, -8]
+
+new1 = list(filter(lambda x: x >= 0, data))
+print(new1)     #用filter函数的方法筛选，结果为[5, 7, 9, 3, 3]
+
+new2 = [x for x in data if x >= 0]
+print(new2)     #用列表生成式的方法筛选，结果和filter筛选结果一致
+
+
+
+
+
+
+
+os.path.exists('abc.txt')
+
+if os.access("./file/path/foo.txt", os.F_OK):
+    print("Given file path is exist.")
+ 
+ 
+if os.access("./file/path/foo.txt", os.R_OK):
+    print("File is accessible to read")
+ 
+ 
+if os.access("./file/path/foo.txt", os.W_OK):
+    print("File is accessible to write")
+ 
+ 
+if os.access("./file/path/foo.txt", os.X_OK):
+    print("File is accessible to execute")
+
+
+def capture_envirment():
+    _env = 'qa'
+    for i, itm in enumerate(sys.argv):
+        if i == 1 and itm in ('dev', 'qa', 'prod'):
+            _env = itm
+            break
+    return _env
+
+
+
+
+
+
+
+十、三方模块
+1.getopt
+getopt用来解析python参数，有两种参数：opts这种表示-h --help，args表示help
+
+# def getopt(args, shortopts, longopts = []):
+# 第一个参数args：
+# 第二个参数shortopts：短参数，带冒号表示有参数值，如“hp:”，表示-h -p 8080
+# 第三个参数longopts：长参数，带等号表示有参数值，如“["help", "port="]”
+    
+opts, args = getopt.getopt(sys.argv[1:], "hp:i:e:", ["help", "ip=", "port=", "env="])
+
+
+
+2.logging
+import logging
+
+# 静态方法
+logging.basicConfig(level=logging.INFO)
+logging.warning("xxxx")
+
+# 工厂方法
+FORMAT="%(asctime)s %(thread)d %(message)s"
+logging.basicConfig(level=logging.INFO,datefmt='%Y-%m-%d %H:%M:%S',format=FORMAT)
+root=logging.getLogger()
+root.warning('my root')
+
+
+
+
+
+
+
+
+
+
