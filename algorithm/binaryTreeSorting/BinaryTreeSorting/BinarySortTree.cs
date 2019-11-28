@@ -159,7 +159,7 @@ namespace BinaryTreeSorting
             return n;
         }
 
-        public  void Print(Node node)
+        public void Print(Node node)
         {
             if (node == null)
             {
