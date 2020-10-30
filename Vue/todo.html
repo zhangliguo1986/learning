@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Vue Todo Tutorial</title>
+        <style>
+            .empty {
+                border-color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+        <input type="text" v-bind:class='{empty: !count}' v-model="value">
+        <input type="button" value="发送" v-on:click="send">
+        <div v-if='count'>value 的值是： {{ value }} </div>
+        <!-- 应用count -->
+        <div>字数：{{ count }}</div>
+        <ol>
+            <!-- 创建一个 todo-item 组件实例 -->
+            <todo-item 
+            v-for="item in groceryList"
+            v-bind:Item="item"
+            v-bind:key="item.id"
+            ></todo-item>
+        </ol>
+        <div>计算属性实时响应： {{ now }}</div>
+    </div>
+    </body>
+    <script src="https://cdn.bootcss.com/vue/2.5.16/vue.js"></script>
+    <script>
+        Vue.component('todo-item', {
+            // todo-item 组件现在接受一个
+            // "prop",类似于一个自定义attribute.
+            // 这个prop名为Item.
+            props:['Item'],
+            template: '<li>{{ Item.text }}</li>'
+        })
+
+        var app = new Vue({
+            el: '#app',
+            // 数据
+            data: {
+                value: '',
+                groceryList: [
+                    { id: 0, text: '蔬菜' },
+                    { id: 1, text: '奶酪' },
+                    { id: 2, text: '随便其它什么人吃的东西' }
+                ]
+            },
+            // 方法
+            methods:{
+                send: function(){
+                    if(!this.value){
+                        alert('请输入内容')
+                        return;
+                    }
+                    alert('发送成功！')
+                    this.value = ''
+                }
+            },
+            // 计算属性
+            computed: {
+                count: function(){
+                    return this.value.length
+                },
+                ok: function(){
+                    return this.value.length > 0
+                },
+                now: function(){
+                    return Date.now()
+                }
+            }
+        })
+    </script>
+</html>
