@@ -8,6 +8,10 @@ namespace IoC
     {
         private readonly IProductDAL _productDAL;
 
+        /// <summary>
+        /// 依赖注入：高层ProductBLL对底层ProductDAL的依赖，通过ProductBLL(IProductDAL productDAL)构造函数注入到ProductBLL中
+        /// </summary>
+        /// <param name="productDAL"></param>
         public ProductBLL(IProductDAL productDAL)
         {
             _productDAL = productDAL;
