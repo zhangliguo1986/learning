@@ -204,18 +204,22 @@ namespace Eagle.Exam8.DataMigrationJob.Jobs
         private int BatchDeleteSourceData()
         {
             var deleteSql = $@"
+                DBCC DROPCLEANBUFFERS  
+                DBCC FREEPROCCACHE 
+                GO
+                SET NOCOUNT ON 
                 BEGIN
                     DECLARE @DELETE_SUM_ROWS INT = 0;
                     DECLARE @DELETE_CURRENT_ROWS INT = 0;
                     WHILE 1 = 1
                     BEGIN
                         DELETE TOP (2000)
-                        FROM {_SourceTableName} {_WhereSql};
+                        FROM {_SourceTableName} WITH(NOLOCK) {_WhereSql};
 		                SET @DELETE_CURRENT_ROWS = @@ROWCOUNT;
                         SET @DELETE_SUM_ROWS += @DELETE_CURRENT_ROWS
 		                IF @DELETE_CURRENT_ROWS < 2000
 			                BREAK;
-                        IF @DELETE_SUM_ROWS >= {_DeleteBatchSize} 
+                        IF @DELETE_SUM_ROWS >= {_DeleteBatchSize}  
                             BREAK;
                         IF @@ERROR <> 0
                         BEGIN
@@ -224,6 +228,7 @@ namespace Eagle.Exam8.DataMigrationJob.Jobs
                         END;
                     END;
                 END;
+                SET NOCOUNT OFF 
                 SELECT @DELETE_SUM_ROWS;
             ";
             using (var connection = new SqlConnection(ConnectionStrings.Exam8_SystemconnStr))
@@ -368,6 +373,42 @@ namespace Eagle.Exam8.DataMigrationJob.Jobs
         //    }
         //}
 
+        #endregion
+
+        #region 禁用索引
+        
+        /// <summary>
+        /// 禁用索引，部分场景下禁用索引，以提高插入和删除速度
+        /// </summary>
+        // protected void DisableTableIndex()
+        // {
+        //     var sql = $@"
+        //         ALTER INDEX ALL ON {_SourceTableName}  
+        //         DISABLE;  
+        //     ";
+        //     using (var connection = new SqlConnection(ConnectionStrings.Exam8_SystemconnStr))
+        //     {
+        //         connection.ExecuteScalar<int>(sql, null, null, 60 * 30);
+        //     }
+        // }
+        #endregion
+
+        #region 启用索引
+        
+        /// <summary>
+        /// 启用索引，禁用索引后启用索引
+        /// </summary>
+        // protected void DisableTableIndex()
+        // {
+        //     var sql = $@"
+        //         ALTER INDEX ALL ON {_SourceTableName}  
+        //         REBUILD;  
+        //     ";
+        //     using (var connection = new SqlConnection(ConnectionStrings.Exam8_SystemconnStr))
+        //     {
+        //         connection.ExecuteScalar<int>(sql, null, null, 60 * 30);
+        //     }
+        // }
         #endregion
     }
 }

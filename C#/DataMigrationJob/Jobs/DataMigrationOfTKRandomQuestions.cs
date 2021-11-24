@@ -204,13 +204,17 @@ namespace Eagle.Exam8.DataMigrationJob.Jobs
         private int BatchDeleteSourceData()
         {
             var deleteSql = $@"
+                DBCC DROPCLEANBUFFERS  
+                DBCC FREEPROCCACHE 
+                GO
+                SET NOCOUNT ON 
                 BEGIN
                     DECLARE @DELETE_SUM_ROWS INT = 0;
                     DECLARE @DELETE_CURRENT_ROWS INT = 0;
                     WHILE 1 = 1
                     BEGIN
                         DELETE TOP (2000)
-                        FROM {_SourceTableName} {_WhereSql};
+                        FROM {_SourceTableName} WITH(NOLOCK) {_WhereSql};
 		                SET @DELETE_CURRENT_ROWS = @@ROWCOUNT;
                         SET @DELETE_SUM_ROWS += @DELETE_CURRENT_ROWS
 		                IF @DELETE_CURRENT_ROWS < 2000
@@ -224,6 +228,7 @@ namespace Eagle.Exam8.DataMigrationJob.Jobs
                         END;
                     END;
                 END;
+                SET NOCOUNT OFF 
                 SELECT @DELETE_SUM_ROWS;
             ";
             using (var connection = new SqlConnection(ConnectionStrings.Exam8_SystemconnStr))
